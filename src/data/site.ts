@@ -90,6 +90,9 @@ export const nav = {
 export const hero = {
   name: profile.name,
   status: 'NTU CSIE MS · Software Engineer',
+  // Availability carries the green status dot (Hero.astro): a dot on the
+  // credential line alone is ambiguous — it must read next to "Open to…".
+  availability: 'Open to new grad roles',
   sub: 'Building useful things with code — from systems observability to LLM agents.',
   ctas: [
     { label: 'View Work', href: '#work' },
@@ -273,10 +276,12 @@ export const footer = {
   brand: '>_',
   copyright: `© 2026 ${profile.name.split(' (')[0]}`,
   sub: 'Email is the fastest way to reach me.',
+  // Labels are the visible handles themselves so a recruiter can copy them
+  // without clicking; hrefs stay the canonical contact URLs.
   contactLinks: [
-    { label: 'Email', href: contact.email, icon: 'mail' },
-    { label: 'GitHub', href: contact.github, icon: 'github' },
-    { label: 'Medium', href: contact.medium },
+    { label: EMAIL, href: contact.email, icon: 'mail' },
+    { label: GITHUB_URL.replace('https://', ''), href: contact.github, icon: 'github' },
+    { label: contact.medium.replace('https://', ''), href: contact.medium },
   ] satisfies { label: string; href: string; icon?: 'mail' | 'github' }[],
 };
 

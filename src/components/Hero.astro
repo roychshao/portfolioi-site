@@ -8,7 +8,10 @@ import portrait from '../assets/img/about-portrait.jpg';
 ---
 <section class="hero" id="top">
   <div class="hero-copy">
-    <span class="pill hero-status"><span class="dot" aria-hidden="true"></span>{hero.status}</span>
+    <div class="hero-pills">
+      <span class="pill hero-status">{hero.status}</span>
+      <span class="pill hero-availability"><span class="dot" aria-hidden="true"></span>{hero.availability}</span>
+    </div>
     <h1 class="hero-name">{hero.name} <span class="wave" aria-hidden="true">👋</span></h1>
     <p class="hero-sub">{hero.sub}</p>
     <div class="hero-ctas">
@@ -45,7 +48,14 @@ import portrait from '../assets/img/about-portrait.jpg';
     .hero { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); }
   }
 
-  .hero-status { margin-bottom: 1.25rem; }
+  /* Status pill + availability pill on one wrapping row; the green dot lives
+     only on the availability pill so "open" is what's literally signalled. */
+  .hero-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
 
   .dot {
     width: 0.5em;

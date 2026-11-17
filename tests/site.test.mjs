@@ -131,6 +131,7 @@ test('site.ts data invariants', async () => {
   // --- hero copy: exact strings from the brief
   assert.equal(site.hero.name, 'Roy Shao (Ching-Hsiang Shao)');
   assert.equal(site.hero.status, 'NTU CSIE MS · Software Engineer');
+  assert.equal(site.hero.availability, 'Open to new grad roles');
   assert.equal(site.hero.sub, 'Building useful things with code — from systems observability to LLM agents.');
   assert.deepEqual(site.hero.ctas.map((c) => c.label), ['View Work', 'Get in touch']);
 
@@ -165,6 +166,9 @@ test('site.ts data invariants', async () => {
   assert.deepEqual(site.footer.contactLinks.map((l) => l.href),
     [site.contact.email, site.contact.github, site.contact.medium],
     'footer contact links must derive from the single contact source');
+  assert.deepEqual(site.footer.contactLinks.map((l) => l.label),
+    ['roych.shao@gmail.com', 'github.com/roychshao', 'medium.com/@roych.shao'],
+    'contact pill labels must be the visible handles (copyable without clicking)');
 
   // --- timeline: the 6 rulings from the controller note
   assert.equal(site.timeline.length, 6);
@@ -638,4 +642,23 @@ test('Task 6: banned strings swept from every dist text file', () => {
       assert.ok(!hay.includes(b), `${path.relative(root, f)} contains banned string "${b}"`);
     }
   }
+});
+
+test('30-second test: hero availability pill + copyable contact handles render in dist', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  const html = unesc(readFileSync(distIndex, 'utf8'));
+
+  // Availability text renders from data (dot sits on this pill, not status).
+  assert.ok(html.includes(site.hero.availability),
+    'hero.availability text should render in dist');
+  assert.match(html, /class="[^"]*\bdot\b[^"]*"[^>]*>[^<]*<\/span>\s*Open to new grad roles/,
+    'the status dot should precede the availability copy');
+
+  // Contact pills expose copyable handle text, not generic labels.
+  const chunk = sectionChunk(html, 'contact');
+  for (const l of site.footer.contactLinks) {
+    assert.ok(chunk.includes(l.label), `contact handle label missing: ${l.label}`);
+  }
+  assert.ok(site.footer.contactLinks.some((l) => l.label.includes('@') && l.label.includes('.')),
+    'contact labels should include @ handle forms');
 });
