@@ -1,7 +1,7 @@
 // Site build smoke test: `npm run build` must emit dist/index.html with the page title.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -12,6 +12,67 @@ test('build produces index.html', () => {
   assert.ok(existsSync(distIndex), 'dist/index.html should exist after npm run build');
   const html = readFileSync(distIndex, 'utf8');
   assert.match(html, /<title>Roy Shao/, 'dist/index.html should contain the <title>Roy Shao ... tag');
+});
+
+test('BaseLayout head: canonical, OG, twitter, fonts, JS budget', () => {
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+  const html = readFileSync(distIndex, 'utf8');
+
+  // --- exactly one canonical, pointing at the configured site origin
+  const canonicals = html.match(/<link[^>]*rel="canonical"[^>]*>/g) ?? [];
+  assert.equal(canonicals.length, 1, 'dist/index.html should contain exactly 1 canonical link');
+  assert.match(canonicals[0], /href="https?:\/\/[^"]+\/?"/, 'canonical needs an absolute href');
+
+  // --- social/SEO meta
+  assert.match(html, /<meta[^>]*property="og:title"[^>]*content="[^"]+"/, 'missing og:title');
+  assert.match(html, /<meta[^>]*property="og:description"[^>]*content="[^"]+"/, 'missing og:description');
+  assert.match(html, /<meta[^>]*name="twitter:card"[^>]*content="summary/, 'missing twitter:card');
+  assert.match(html, /<meta[^>]*name="description"[^>]*content="[^"]+"/, 'missing meta description');
+
+  // --- font-display:swap must survive into the emitted CSS (inlined or linked)
+  const distDir = path.join(root, 'dist');
+  const cssFiles = [];
+  (function walk(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.css')) cssFiles.push(p);
+    }
+  })(distDir);
+  const css = cssFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
+    + '\n' + (html.match(/<style[^>]*>[\s\S]*?<\/style>/g) ?? []).join('\n');
+  assert.match(css, /font-display:\s*swap/, 'emitted CSS should contain font-display: swap');
+  assert.match(css, /@font-face/, 'emitted CSS should contain @font-face rules (self-hosted fonts)');
+
+  // --- design tokens + utility classes + reveal contract (hidden ONLY under .js)
+  assert.match(css, /--c-primary:\s*#2563eb/i, 'missing --c-primary token');
+  assert.match(css, /--c-ink:\s*#0f172a/i, 'missing --c-ink token');
+  assert.match(css, /--c-muted:\s*#64748b/i, 'missing --c-muted token');
+  assert.match(css, /--c-bg:\s*#f8fafc/i, 'missing --c-bg token');
+  assert.match(css, /--c-card:\s*(#fff|#ffffff)\b/i, 'missing --c-card token');
+  assert.match(css, /--radius:\s*14px/, 'missing --radius token');
+  assert.match(css, /--font-sans:\s*['"]?Inter/, 'missing --font-sans token');
+  assert.match(css, /--font-mono:\s*['"]?JetBrains Mono/, 'missing --font-mono token');
+  assert.match(css, /\.pill\b/, 'missing .pill utility');
+  assert.match(css, /\.card\b/, 'missing .card utility');
+  assert.match(css, /\.section-title\b/, 'missing .section-title utility');
+  assert.match(css, /\.js\s+\.reveal\s*\{[^}]*opacity:\s*0/, 'reveal hidden state must be gated on .js');
+  assert.match(css, /\.js\s+\.reveal\.is-visible/, 'reveal .is-visible contract missing');
+  const revealBare = css.replace(/\.js\s+\.reveal/g, '');
+  assert.doesNotMatch(revealBare, /(^|[^.\w])\.reveal\s*\{[^}]*opacity:\s*0/,
+    'no un-gated .reveal hidden state (JS-disabled must show content)');
+
+  // --- page JS budget: all emitted JS files total < 30 KB
+  const jsFiles = [];
+  (function walkJs(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walkJs(p);
+      else if (e.name.endsWith('.js')) jsFiles.push(p);
+    }
+  })(distDir);
+  const jsTotal = jsFiles.reduce((n, f) => n + statSync(f).size, 0);
+  assert.ok(jsTotal < 30 * 1024, `dist JS is ${(jsTotal / 1024).toFixed(1)} KB — budget is 30 KB`);
 });
 
 test('site.ts data invariants', async () => {
