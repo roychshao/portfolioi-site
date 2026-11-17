@@ -4,8 +4,8 @@
 //  2. every <img> has a srcset containing .avif or .webp variants (astro:assets pipeline)
 //  3. exactly one eager image (the hero LCP) with fetchpriority="high"; all others lazy
 //  4. dist ships no raster originals — every image asset in dist is .webp/.avif,
-//     and no source .png/.jpg > 300 KB was copied into dist
-//  5. budget: unique image bytes referenced by the page's srcsets < 1.2 MB
+//     and no single raster file in dist exceeds 300 KB
+//  5. budget: unique image bytes referenced by the page (srcset ∪ src) < 1.2 MB
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -68,22 +68,20 @@ test('hero is the only eager image and carries fetchpriority=high; the rest are 
   }
 });
 
-test('dist ships optimized variants only — no raster originals, no source png/jpg over 300 KB', () => {
+test('dist ships optimized variants only — no raster originals, no raster over 300 KB', () => {
   const files = walkFiles(distDir);
   const rasters = files.filter((f) => /\.(png|jpe?g|avif|webp)$/i.test(f));
   assert.ok(rasters.length > 0, 'expected image assets in dist');
   for (const f of rasters) {
     assert.match(f, /\.(avif|webp)$/i,
       `dist contains a raster original (${path.relative(root, f)}) — only transformed webp/avif allowed`);
-  }
-  for (const f of files) {
-    if (/\.png$/i.test(f) || /\.jpe?g$/i.test(f)) {
-      assert.ok(statSync(f).size <= 300 * 1024, `${path.relative(root, f)} exceeds the 300 KB original cap`);
-    }
+    // per-file cap applies to every raster shipped (webp/avif are the only rasters allowed, so this is the full set)
+    const kb = statSync(f).size / 1024;
+    assert.ok(kb <= 300, `${path.relative(root, f)} is ${kb.toFixed(1)} KB — per-file cap is 300 KB`);
   }
 });
 
-test('image budget: srcset-referenced image bytes < 1.2 MB', () => {
+test('image budget: srcset- and src-referenced image bytes < 1.2 MB', () => {
   const urls = new Set();
   for (const tag of imgTags()) {
     const srcset = attr(tag, 'srcset');
@@ -92,6 +90,9 @@ test('image budget: srcset-referenced image bytes < 1.2 MB', () => {
       const u = c.trim().split(/\s+/)[0];
       if (u) urls.add(u);
     }
+    // the plain src fallback must count too — it is what srcset-less clients download
+    const src = attr(tag, 'src');
+    if (src) urls.add(src);
   }
   let total = 0;
   const detail = [];
@@ -104,5 +105,5 @@ test('image budget: srcset-referenced image bytes < 1.2 MB', () => {
   }
   console.log(`[image-budget] ${urls.size} unique image variants, ${total.toFixed(1)} KB total`);
   for (const line of detail.sort()) console.log('  ' + line);
-  assert.ok(total < 1.2 * 1024, `srcset-referenced images weigh ${total.toFixed(0)} KB — budget is 1.2 MB`);
+  assert.ok(total < 1.2 * 1024, `referenced images weigh ${total.toFixed(0)} KB — budget is 1.2 MB`);
 });

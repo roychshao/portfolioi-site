@@ -38,7 +38,7 @@ const { caseItem, figures } = Astro.props;
 
   {figures.length > 0 && (
     <div class="case-figures">
-      {figures.map((f) => <figure class={f.width >= 960 ? 'fig fig-wide' : 'fig'}><Image src={f.src} widths={[Math.round(f.width / 2), f.width]} alt={f.alt} loading="lazy" /></figure>)}
+      {figures.map((f) => <figure class={f.width >= 960 ? 'fig fig-wide' : 'fig'}><Image src={f.src} width={f.width} widths={[Math.round(f.width / 2), f.width]} alt={f.alt} loading="lazy" /></figure>)}
     </div>
   )}
 
