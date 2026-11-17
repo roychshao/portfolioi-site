@@ -192,7 +192,7 @@ test('site.ts data invariants', async () => {
     'chatApp',
   ].sort());
 
-  // --- Task 6 copy homes: about story, honors-writing title, footer strings
+  // --- Task 6 copy homes: about story, writing section title, footer strings
   assert.ok(Array.isArray(site.about.story) && site.about.story.length >= 1,
     'about.story should be a non-empty array of paragraphs');
   assert.ok(site.about.story.every((p) => typeof p === 'string' && p.trim().length > 40),

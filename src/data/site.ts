@@ -227,7 +227,7 @@ export const research: Case[] = [
     title: 'Automated Monolith-to-Microservices Transformation',
     tagline:
       "An NTU SE Lab research project continuing my senior Dong-Hong Wu's master's thesis (same lab, same advisor, Prof. Jonathan Lee) — carried forward in my first master's year: static-analysis service-dependency extraction, aggregate roots inferred from entity relationships (my proposal), and the aggregate repacking stage, which I was responsible for.",
-    badges: ["NTU SE Lab · continued from Wu's MS thesis (2025)", 'Roy: aggregate-root proposal + repack'],
+    badges: ['NTU SE Lab · continued from a senior\u2019s MS thesis', 'Roy: aggregate-root proposal + repack'],
     techTags: ['Java', 'Static Analysis', 'Spring', 'DDD', 'Microservices'],
     // The source note's only public pointer is the base thesis DOI (verified to
     // resolve to NTU's institutional repository). No public repo — never imply one.
@@ -235,7 +235,7 @@ export const research: Case[] = [
     figures: [],
     body: {
       challenge:
-        'Splitting a monolithic Java web application into microservices without hand-crafting the boundaries. The base thesis — Transform Monolithic Web Applications into Microservice Architecture (NTU CSIE MS, Jul 2025) — defined an automated pipeline; I continued the project in my first master\u2019s year, prototyping the static-analysis dependency extraction end to end and taking over how service boundaries would be derived and repacked.',
+        'Splitting a monolithic Java web application into microservices without hand-crafting the boundaries. The base project — later published as my senior’s master’s thesis, Transform Monolithic Web Applications into Microservice Architecture (NTU CSIE MS, Jul 2025) — defined an automated pipeline; I carried it forward during my first master\u2019s year, prototyping the static-analysis dependency extraction end to end and taking over how service boundaries would be derived and repacked.',
       approach: [
         {
           title: 'Service decomposition',
@@ -252,7 +252,7 @@ export const research: Case[] = [
       ],
       // The source note carries no evaluation numbers — factual deliverables only.
       results: [
-        { metric: 'Proposal', label: 'entity-relationship aggregate-root inference adopted for the DDD aggregate definition' },
+        { metric: 'Proposal', label: 'entity-relationship aggregate-root inference — my proposal, applied in the composition stage of the DDD aggregate definition' },
         { metric: 'Owned', label: 'the aggregate + dependency repacking stage, prototyped end to end in my first master\u2019s year' },
         { metric: 'Pipeline', label: 'static-analysis dependency extraction feeding service composition on a real monolithic web app' },
       ],
