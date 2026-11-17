@@ -54,12 +54,6 @@ export interface WritingItem {
   date: string;
 }
 
-export interface HonorItem {
-  title: string;
-  detail: string;
-  year: string;
-  url: string;
-}
 
 // Repeated copy lives in exactly one place; every consumer interpolates from here.
 const EMAIL = 'roych.shao@gmail.com';
@@ -82,6 +76,7 @@ export const nav = {
   brand: '>_ Roy Shao',
   links: [
     { label: 'Work', href: '#work' },
+    { label: 'Research', href: '#research' },
     { label: 'About', href: '#about' },
     { label: 'Contact', href: '#contact' },
   ] satisfies NavItem[],
@@ -101,53 +96,6 @@ export const hero = {
 };
 
 export const cases: Case[] = [
-  {
-    id: 'thesis',
-    title: 'Turning Natural Language into Real System Queries',
-    tagline:
-      "My master's thesis: a stage-based LLM agentic workflow — with a use-case spec as the middle representation — that answers real DCIM users' questions on a production data-center system.",
-    badges: [`mean ${THESIS_MEAN} spec similarity · n=${THESIS_N}`, 'top-3 100% method matching', '27/27 final reply checks'],
-    techTags: ['Python', 'LlamaIndex', 'vLLM', 'Qdrant', 'LLM Agents'],
-    links: [{ label: 'Paper (DOI)', url: 'https://doi.org/10.6342/NTU202603218' }],
-    // Display order: the headline similarity chart leads the panel.
-    figures: [
-      { key: 'similarity', alt: `Regenerated spec similarity distribution over ${THESIS_N} real DCIM queries (mean ${THESIS_MEAN}, median ${THESIS_MEDIAN})` },
-      { key: 'architecture', alt: 'The commercial DCIM system architecture the agentic workflow targets' },
-      { key: 'pipeline', alt: 'Stage-based agentic workflow pipeline: initial, controller, computation, reply' },
-    ],
-    body: {
-      challenge:
-        'Operators of a commercial DCIM (data-center infrastructure management) system can only get answers by navigating dense query UIs. Could natural language reliably drive a real management system? I built and validated a stage-based LLM agentic workflow that translates user queries into correct system behavior, independently owning the full pipeline — from dataset construction to the automated workflow. Evaluation used ' + THESIS_N + ' real DCIM user queries with manually annotated use-case specs, served by Gemma-4-31B-it via vLLM on an NVIDIA DGX Spark (temperature 0.0).',
-      approach: [
-        {
-          title: 'Initial',
-          text: 'Normalize the natural-language query and bind it to a use-case spec — an intermediate representation that bridges user intent and the system\u2019s API surface. Regenerated-spec similarity measured how faithfully this step preserved intent.',
-        },
-        {
-          title: 'Controller',
-          text: 'Select the right system methods via semantic retrieval of the top-10 candidates, then keyword boosting to disambiguate near-misses — evaluated over 929 workflow steps.',
-        },
-        {
-          title: 'Computation',
-          text: 'Compose and order the selected API operations into a correct computation path that produces the answer — evaluated over 3,348 steps.',
-        },
-        {
-          title: 'Reply',
-          text: 'Render the final answer and compare key data fields against ground-truth replies for format and value consistency.',
-        },
-      ],
-      results: [
-        { metric: `n=${THESIS_N}`, label: 'real DCIM user queries with manually annotated use-case specs (Gemma-4-31B-it @ vLLM, temp 0.0)' },
-        { metric: `mean ${THESIS_MEAN}`, label: `regenerated spec similarity (median ${THESIS_MEDIAN}, σ 0.030)` },
-        { metric: '96.02%', label: 'controller method matching — semantic retrieval top-10 over 929 steps' },
-        { metric: 'top-1 95.05%', label: 'controller method matching with keyword boost added' },
-        { metric: 'top-3 100%', label: 'controller method matching with keyword boost added' },
-        { metric: '92.08%', label: 'computation operation matching — top-10 over 3,348 steps' },
-        { metric: 'top-1 100%', label: 'computation operation matching with keyword boost added' },
-        { metric: '27/27', label: 'final-reply key-data consistency checks passed on the format-consistent set (100%)' },
-      ],
-    },
-  },
   {
     id: 'sunbird',
     title: 'Sunbird — Kubernetes Telemetry, Push vs Pull',
@@ -219,18 +167,134 @@ export const cases: Case[] = [
   },
 ];
 
-export const honors: HonorItem[] = [
+// Research section — three items: (1) Roy's own NTU master's thesis (moved out of
+// Work with its Chapter-4 metrics + DOI link intact), (2) the NTU monolith-to-
+// microservices project continuing his senior Dong-Hong Wu's master's thesis —
+// Roy (MS year 1) proposed the entity-relationship aggregate-root inference and
+// was responsible for the aggregate repacking stage, (3) the TANET 2023 Best
+// Paper OpenTelemetry+AOP research. Same Case shape as the Work items, so both
+// sections share one accordion component (CaseList).
+export const research: Case[] = [
   {
-    title: 'TANET 2023 Best Paper',
-    detail:
-      'First author — OpenTelemetry instrumentation via AOP (JPetStore case), NCCU SE Lab. Repo: TANET2023-JPetStore-OpenTelemetry.',
-    year: '2023',
-    url: `${GITHUB_URL}/TANET2023-JPetStore-OpenTelemetry`,
+    id: 'thesis',
+    title: 'Turning Natural Language into Real System Queries',
+    tagline:
+      "My master's thesis: a stage-based LLM agentic workflow — with a use-case spec as the middle representation — that answers real DCIM users' questions on a production data-center system.",
+    badges: [`mean ${THESIS_MEAN} spec similarity · n=${THESIS_N}`, 'top-3 100% method matching', '27/27 final reply checks'],
+    techTags: ['Python', 'LlamaIndex', 'vLLM', 'Qdrant', 'LLM Agents'],
+    links: [{ label: 'Paper (DOI)', url: 'https://doi.org/10.6342/NTU202603218' }],
+    // Display order: the headline similarity chart leads the panel.
+    figures: [
+      { key: 'similarity', alt: `Regenerated spec similarity distribution over ${THESIS_N} real DCIM queries (mean ${THESIS_MEAN}, median ${THESIS_MEDIAN})` },
+      { key: 'architecture', alt: 'The commercial DCIM system architecture the agentic workflow targets' },
+      { key: 'pipeline', alt: 'Stage-based agentic workflow pipeline: initial, controller, computation, reply' },
+    ],
+    body: {
+      challenge:
+        'Operators of a commercial DCIM (data-center infrastructure management) system can only get answers by navigating dense query UIs. Could natural language reliably drive a real management system? I built and validated a stage-based LLM agentic workflow that translates user queries into correct system behavior, independently owning the full pipeline — from dataset construction to the automated workflow. Evaluation used ' + THESIS_N + ' real DCIM user queries with manually annotated use-case specs, served by Gemma-4-31B-it via vLLM on an NVIDIA DGX Spark (temperature 0.0).',
+      approach: [
+        {
+          title: 'Initial',
+          text: 'Normalize the natural-language query and bind it to a use-case spec — an intermediate representation that bridges user intent and the system\u2019s API surface. Regenerated-spec similarity measured how faithfully this step preserved intent.',
+        },
+        {
+          title: 'Controller',
+          text: 'Select the right system methods via semantic retrieval of the top-10 candidates, then keyword boosting to disambiguate near-misses — evaluated over 929 workflow steps.',
+        },
+        {
+          title: 'Computation',
+          text: 'Compose and order the selected API operations into a correct computation path that produces the answer — evaluated over 3,348 steps.',
+        },
+        {
+          title: 'Reply',
+          text: 'Render the final answer and compare key data fields against ground-truth replies for format and value consistency.',
+        },
+      ],
+      results: [
+        { metric: `n=${THESIS_N}`, label: 'real DCIM user queries with manually annotated use-case specs (Gemma-4-31B-it @ vLLM, temp 0.0)' },
+        { metric: `mean ${THESIS_MEAN}`, label: `regenerated spec similarity (median ${THESIS_MEDIAN}, σ 0.030)` },
+        { metric: '96.02%', label: 'controller method matching — semantic retrieval top-10 over 929 steps' },
+        { metric: 'top-1 95.05%', label: 'controller method matching with keyword boost added' },
+        { metric: 'top-3 100%', label: 'controller method matching with keyword boost added' },
+        { metric: '92.08%', label: 'computation operation matching — top-10 over 3,348 steps' },
+        { metric: 'top-1 100%', label: 'computation operation matching with keyword boost added' },
+        { metric: '27/27', label: 'final-reply key-data consistency checks passed on the format-consistent set (100%)' },
+      ],
+    },
+  },
+  {
+    id: 'wu-microservices',
+    title: 'Automated Monolith-to-Microservices Transformation',
+    tagline:
+      "An NTU SE Lab research project continuing my senior Dong-Hong Wu's master's thesis (same lab, same advisor, Prof. Jonathan Lee) — carried forward in my first master's year: static-analysis service-dependency extraction, aggregate roots inferred from entity relationships (my proposal), and the aggregate repacking stage, which I was responsible for.",
+    badges: ["NTU SE Lab · continued from Wu's MS thesis (2025)", 'Roy: aggregate-root proposal + repack'],
+    techTags: ['Java', 'Static Analysis', 'Spring', 'DDD', 'Microservices'],
+    // The source note's only public pointer is the base thesis DOI (verified to
+    // resolve to NTU's institutional repository). No public repo — never imply one.
+    links: [{ label: 'Base Thesis (DOI)', url: 'https://doi.org/10.6342/NTU202503749' }],
+    figures: [],
+    body: {
+      challenge:
+        'Splitting a monolithic Java web application into microservices without hand-crafting the boundaries. The base thesis — Transform Monolithic Web Applications into Microservice Architecture (NTU CSIE MS, Jul 2025) — defined an automated pipeline; I continued the project in my first master\u2019s year, prototyping the static-analysis dependency extraction end to end and taking over how service boundaries would be derived and repacked.',
+      approach: [
+        {
+          title: 'Service decomposition',
+          text: 'Parse and analyze Java source (JavaParser / SootUp, with Spring bean handling) to extract dependencies and database models, yielding describable service components — the thesis pipeline I continued with static-analysis dependency extraction.',
+        },
+        {
+          title: 'Aggregate roots from entity relationships',
+          text: 'My own proposal for the composition stage: rather than leaving the domain model to purely structural clustering, infer DDD aggregate roots directly from the relationships between entities (one-to-one, one-to-many), so each aggregate\u2019s boundary follows the domain\u2019s own coupling. The thesis baseline clustered service components (silhouette-scored); the relationship-based inference gave those boundaries a modeling rationale.',
+        },
+        {
+          title: 'Aggregate repacking (my part)',
+          text: 'I was responsible for the repack: reassembling the decomposed components into new microservices around the inferred aggregates, including dependency repacking for background mechanisms (Eureka, Hibernate) so the repacked services stay runnable.',
+        },
+      ],
+      // The source note carries no evaluation numbers — factual deliverables only.
+      results: [
+        { metric: 'Proposal', label: 'entity-relationship aggregate-root inference adopted for the DDD aggregate definition' },
+        { metric: 'Owned', label: 'the aggregate + dependency repacking stage, prototyped end to end in my first master\u2019s year' },
+        { metric: 'Pipeline', label: 'static-analysis dependency extraction feeding service composition on a real monolithic web app' },
+      ],
+    },
+  },
+  {
+    id: 'tanet',
+    title: 'OpenTelemetry Instrumentation via Aspect-Oriented Programming',
+    tagline:
+      'My first-author research at the NCCU SE Lab — separating OpenTelemetry instrumentation logic from business code with AOP, keeping automatic-mode convenience without giving up manual-mode granularity. Awarded Best Paper at TANET 2023.',
+    badges: ['TANET 2023 \u00b7 Best Paper Award', 'first author'],
+    techTags: ['OpenTelemetry', 'AOP', 'Java', 'JPetStore'],
+    links: [{ label: 'Source (GitHub)', url: `${GITHUB_URL}/TANET2023-JPetStore-OpenTelemetry` }],
+    figures: [],
+    body: {
+      challenge:
+        'OpenTelemetry offers two instrumentation modes and both hurt: automatic instrumentation is convenient but instruments too much, burns resources, and is limited to a few languages (.NET, Java, JavaScript, Python, Ruby), while manual instrumentation is fine-grained but sprinkles non-business logic through the code. Observability is a cross-cutting concern unrelated to business logic — the question was whether AOP could separate the two cleanly (research with me as first author, Jan\u2013Nov 2023, partially funded by MOST grant 112-2221-E-004-001).',
+      approach: [
+        {
+          title: 'Instrumentation as aspects',
+          text: 'Isolated the OpenTelemetry instrumentation logic into standalone aspects — day-to-day development touches only business code, and weaving merges the monitoring behavior back in, making instrumentation a flexible, reusable mechanism.',
+        },
+        {
+          title: 'Trace semantics under AOP',
+          text: 'Handled the hard parts of splitting spans across aspect boundaries: parent-child span relationships, context propagation, and link marking.',
+        },
+        {
+          title: 'Benchmark study',
+          text: 'Used the open-source JPetStore e-commerce system as the benchmark, building the same application under automatic, manual and AOP instrumentation, then comparing all three qualitatively and quantitatively.',
+        },
+      ],
+      results: [
+        { metric: 'Best Paper', label: 'TANET 2023 (first author) — the AOP approach balances convenience with high-granularity monitoring' },
+        { metric: '3 modes', label: 'automatic vs manual vs AOP compared on the JPetStore benchmark' },
+        { metric: 'Separation', label: 'business vs monitoring logic split improved maintainability' },
+      ],
+    },
   },
 ];
 
-export const honorsWriting = {
-  title: 'Honors & Writing',
+export const writingSection = {
+  title: 'Writing',
 };
 
 export const writing: WritingItem[] = [

@@ -1,21 +1,23 @@
 ---
-// Home page — full block order per plan §頁面結構: Nav, Hero, Work,
-// Honors & Writing, About, Contact + Footer (Tasks 4-6).
+// Home page — block order: Nav, Hero, Work, Research, Writing, About,
+// Contact + Footer (owner restructure directive 2026-11-17). Work and Research
+// share the CaseList accordion component; copy lives only in data/site.ts.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
 import CaseList from '../components/CaseList.astro';
-import HonorsWriting from '../components/HonorsWriting.astro';
+import Writing from '../components/Writing.astro';
 import About from '../components/About.astro';
 import Footer from '../components/Footer.astro';
-import { profile } from '../data/site';
+import { profile, cases, research } from '../data/site';
 ---
 <BaseLayout title={`${profile.name} — ${profile.role}`}>
   <Nav />
   <main id="main">
     <Hero />
-    <CaseList />
-    <HonorsWriting />
+    <CaseList id="work" items={cases} />
+    <CaseList id="research" items={research} />
+    <Writing />
     <About />
     <Footer part="contact" />
   </main>

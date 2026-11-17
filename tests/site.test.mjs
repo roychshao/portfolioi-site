@@ -79,9 +79,12 @@ test('site.ts data invariants', async () => {
   // Node v26 strips TS types natively — import the module directly, no flags.
   const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
 
-  // --- cases: exactly 3, in order, ids thesis|sunbird|dcim
-  assert.deepEqual(site.cases.map((c) => c.id), ['thesis', 'sunbird', 'dcim']);
-  for (const c of site.cases) {
+  // --- cases: Work holds exactly 2 (thesis moved to Research)
+  assert.deepEqual(site.cases.map((c) => c.id), ['sunbird', 'dcim']);
+  // --- research: exactly 3, in order, ids thesis|wu-microservices|tanet
+  assert.ok(Array.isArray(site.research), 'site.research (Case[]) should be exported');
+  assert.deepEqual(site.research.map((c) => c.id), ['thesis', 'wu-microservices', 'tanet']);
+  for (const c of [...site.cases, ...site.research]) {
     for (const k of ['id', 'title', 'tagline', 'badges', 'techTags', 'links', 'figures', 'body']) {
       assert.ok(k in c, `case ${c.id} missing field ${k}`);
     }
@@ -93,10 +96,11 @@ test('site.ts data invariants', async () => {
   }
 
   // --- figures: alt prose lives in site.ts (components hold only key→import maps
-  // and render widths); counts per case must be thesis 3 / sunbird 3 / dcim 0
-  assert.deepEqual(site.cases.map((c) => c.figures.length), [3, 3, 0],
-    'site.ts figures counts should be 3/3/0');
-  for (const c of site.cases) {
+  // and render widths); counts per case must be sunbird 3 / dcim 0 / thesis 3 /
+  // wu 0 / tanet 0 (document order: cases then research)
+  assert.deepEqual([...site.cases, ...site.research].map((c) => c.figures.length), [3, 0, 3, 0, 0],
+    'figures counts should be sunbird 3 / dcim 0 / thesis 3 / wu 0 / tanet 0');
+  for (const c of [...site.cases, ...site.research]) {
     assert.ok(c.figures.every((f) => typeof f.key === 'string' && f.key && typeof f.alt === 'string' && f.alt),
       `case ${c.id}: every figure needs a non-empty key and alt`);
     assert.equal(new Set(c.figures.map((f) => f.key)).size, c.figures.length,
@@ -105,8 +109,8 @@ test('site.ts data invariants', async () => {
   // the similarity-dist alt restates headline stats — it must carry the same
   // derived values as results, not a second hand-typed copy
   {
-    const simAlt = site.cases[0].figures[0].alt;
-    const res = site.cases[0].body.results;
+    const simAlt = site.research[0].figures[0].alt;
+    const res = site.research[0].body.results;
     const n = res[0].metric.replace(/^n=/, '');
     const mean = res[1].metric.replace(/^mean /, '');
     const median = res[1].label.match(/median ([\d.]+)/)[1];
@@ -116,17 +120,54 @@ test('site.ts data invariants', async () => {
   }
 
   // --- thesis results carry the Chapter 4 numbers verbatim
-  const thesisText = JSON.stringify(site.cases[0].body.results);
+  const thesisText = JSON.stringify(site.research[0].body.results);
   for (const m of ['mean 0.954', '96.02%', 'top-3 100%', '92.08%', '27/27']) {
     assert.ok(thesisText.includes(m), `thesis results should contain "${m}"`);
   }
   // thesis links: DOI only (source code is not public — never imply a repo)
-  assert.deepEqual(site.cases[0].links, [{ label: 'Paper (DOI)', url: 'https://doi.org/10.6342/NTU202603218' }]);
+  assert.deepEqual(site.research[0].links, [{ label: 'Paper (DOI)', url: 'https://doi.org/10.6342/NTU202603218' }]);
+  // --- wu-microservices: base thesis is the senior's; Roy's role credited precisely
+  {
+    const wu = JSON.stringify(site.research[1]);
+    assert.ok(wu.includes('Dong-Hong Wu'), 'wu item must name the senior thesis author');
+    assert.ok(/propos/i.test(wu) && /aggregate root/i.test(wu) && /one-to-one/.test(wu) && /one-to-many/.test(wu),
+      'wu item must credit Roy for proposing aggregate-root inference from entity relationships (1:1, 1:N)');
+    assert.ok(/responsible|owned|my part/i.test(site.research[1].body.approach.map((s) => s.text).join(' ') + JSON.stringify(site.research[1].body.results)) && wu.includes('repack'),
+      'wu item must state Roy was responsible for the repack part');
+    assert.ok(wu.includes('first master') || wu.includes('MS year 1'),
+      'wu item must place Roy\u2019s continuation in his first master\u2019s year');
+    // same depth as the thesis item: full challenge/approach/results accordion
+    assert.ok(site.research[1].body.challenge.length > 40, 'wu challenge should be substantive');
+    assert.ok(site.research[1].body.approach.length >= 3, 'wu item needs the same accordion depth as the thesis item');
+    assert.ok(site.research[1].body.results.length >= 3, 'wu results: factual deliverables, not a one-liner');
+    // links: the note's single public pointer is the base thesis DOI (verified to resolve
+    // to NTU TDR); no repo, no invented URLs
+    assert.deepEqual(site.research[1].links, [{ label: 'Base Thesis (DOI)', url: 'https://doi.org/10.6342/NTU202503749' }]);
+    assert.ok(!wu.includes('github.com'), 'wu item must not imply a public repo');
+    // no invented numbers: metrics stay qualitative (facts in the note carry none)
+    assert.ok(!/\d+\.\d+%|\d+\/\d+/.test(JSON.stringify(site.research[1].body.results)),
+      'wu results must not invent quantitative metrics \u2014 the source note has none');
+  }
+  // --- tanet: Best Paper badge + first author + pinned repo link
+  {
+    const tanet = JSON.stringify(site.research[2]);
+    assert.ok(site.research[2].badges.some((b) => b.includes('Best Paper')), 'tanet item must badge the Best Paper award');
+    assert.ok(tanet.includes('first author'), 'tanet item must state first authorship');
+    assert.deepEqual(site.research[2].links, [{ label: 'Source (GitHub)', url: 'https://github.com/roychshao/TANET2023-JPetStore-OpenTelemetry' }]);
+    assert.ok(site.research[2].body.approach.length >= 3 && site.research[2].body.results.length >= 2,
+      'tanet item gets the full accordion depth too');
+    assert.ok(!/\d+\.\d+%/.test(JSON.stringify(site.research[2].body.results)),
+      'tanet results must not invent numbers \u2014 the source note has none');
+  }
   // sunbird links: pinned repo + delivery badge; dcim links: GitHub profile only
-  assert.equal(site.cases[1].links[0].url, 'https://github.com/roychshao/Sunbird-Container-Observability-Project');
-  assert.ok(site.cases[1].badges.some((b) => b.includes('3 demos · 3 source branches')));
-  assert.deepEqual(site.cases[2].links, [{ label: 'GitHub profile', url: 'https://github.com/roychshao' }]);
-  assert.ok(site.cases[2].badges.some((b) => b.includes('100+ Cypress E2E · adopted as lab standard')));
+  assert.equal(site.cases[0].links[0].url, 'https://github.com/roychshao/Sunbird-Container-Observability-Project');
+  assert.ok(site.cases[0].badges.some((b) => b.includes('3 demos \u00b7 3 source branches')));
+  assert.deepEqual(site.cases[1].links, [{ label: 'GitHub profile', url: 'https://github.com/roychshao' }]);
+  assert.ok(site.cases[1].badges.some((b) => b.includes('100+ Cypress E2E \u00b7 adopted as lab standard')));
+
+  // --- nav: exactly 4 links, Research inserted between Work and About
+  assert.deepEqual(site.nav.links.map((l) => l.label), ['Work', 'Research', 'About', 'Contact']);
+  assert.deepEqual(site.nav.links.map((l) => l.href), ['#work', '#research', '#about', '#contact']);
 
   // --- hero copy: exact strings from the brief
   assert.equal(site.hero.name, 'Roy Shao (Ching-Hsiang Shao)');
@@ -160,7 +201,9 @@ test('site.ts data invariants', async () => {
     'about.imageAlt should be non-empty');
   assert.ok(typeof site.about.skillsLabel === 'string' && site.about.skillsLabel.trim().length > 0,
     'about.skillsLabel should be a non-empty string (accessible name for the skill-pills region)');
-  assert.equal(site.honorsWriting.title, 'Honors & Writing');
+  assert.equal(site.writingSection.title, 'Writing');
+  assert.ok(!('honors' in site), 'honors export removed — the TANET honor lives in the research badge + timeline, not a banner');
+  assert.ok(!('honorsWriting' in site), 'honorsWriting export removed with the Honors & Writing section');
   assert.equal(site.footer.brand, '>_');
   assert.equal(site.footer.copyright, `© 2026 ${site.profile.name.split(' (')[0]}`);
   assert.deepEqual(site.footer.contactLinks.map((l) => l.href),
@@ -195,10 +238,10 @@ test('site.ts data invariants', async () => {
   assert.equal(site.hero.name, site.profile.name);
   assert.equal(site.hero.ctas[1].href, `mailto:${site.profile.email}`);
   assert.equal(site.contact.email, `mailto:${site.profile.email}`);
-  for (const u of [site.contact.github, site.cases[2].links[0].url]) {
+  for (const u of [site.contact.github, site.cases[1].links[0].url]) {
     assert.equal(u, site.profile.github, 'GitHub profile URLs must all equal the shared profile URL');
   }
-  for (const u of [site.cases[1].links[0].url, ...site.honors.map((h) => h.url)]) {
+  for (const u of [site.cases[0].links[0].url, site.research[2].links[0].url]) {
     assert.ok(u === site.profile.github || u.startsWith(`${site.profile.github}/`),
       `GitHub URL "${u}" must derive from the shared profile URL`);
   }
@@ -230,7 +273,7 @@ test('Task 4: sticky nav renders anchors, wordmark, icons, and mobile toggle', a
     + '\n' + (html.match(/<style[^>]*>[\s\S]*?<\/style>/g) ?? []).join('\n');
 
   // --- anchor links straight from nav data, sticky capsule in CSS
-  for (const href of ['#work', '#about', '#contact']) {
+  for (const href of ['#work', '#research', '#about', '#contact']) {
     assert.match(html, new RegExp(`href="${href}"`), `nav should link ${href}`);
   }
   assert.match(css, /(site-nav|nav-capsule|nav-inner)[^{]*\{[^}]*position:\s*sticky/i,
@@ -269,12 +312,12 @@ test('Task 4: sticky nav renders anchors, wordmark, icons, and mobile toggle', a
 });
 
 // --- Task 5 helpers: isolate one case's <article> region in the emitted HTML
-function articleChunks(html) {
-  const ids = ['thesis', 'sunbird', 'dcim'];
+// (ids given in document order across the work + research sections)
+function articleChunks(html, ids) {
   const starts = ids.map((id) => html.indexOf(`data-case-id="${id}"`));
   starts.forEach((i, k) => assert.ok(i > -1, `article[data-case-id="${ids[k]}"] missing`));
-  const workEnd = html.indexOf('</section>', starts[2]);
-  const ends = [starts[1], starts[2], workEnd];
+  const lastEnd = html.indexOf('</section>', starts[starts.length - 1]);
+  const ends = [...starts.slice(1), lastEnd];
   const out = {};
   ids.forEach((id, k) => { out[id] = html.slice(starts[k], ends[k]); });
   return out;
@@ -298,14 +341,15 @@ test('Task 5: work section — 3 case accordions with panels, metrics, images, l
   assert.match(html, /<section[^>]*id="work"/, 'missing section#work');
   assert.match(html, /<section[^>]*id="work"[^>]*class="[^"]*\breveal\b/, 'section#work should carry .reveal');
 
-  // --- markup contract: exactly 3 articles, ids in data order
+  // --- markup contract: exactly 5 accordions across work(2)+research(3), ids in data order
   const ids = [...html.matchAll(/<article[^>]*data-case-id="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(ids, ['thesis', 'sunbird', 'dcim'], 'expected 3 article[data-case-id] in order');
-  assert.equal((html.match(/<article\b(?=[^>]*data-case-id)(?=[^>]*class="[^"]*\breveal\b)[^>]*>/g) ?? []).length, 3,
+  assert.deepEqual(ids, ['sunbird', 'dcim', 'thesis', 'wu-microservices', 'tanet'],
+    'expected 2 work + 3 research article[data-case-id] in order');
+  assert.equal((html.match(/<article\b(?=[^>]*data-case-id)(?=[^>]*class="[^"]*\breveal\b)[^>]*>/g) ?? []).length, 5,
     'each case article should carry .reveal');
 
-  const chunks = articleChunks(html);
-  for (const c of site.cases) {
+  const chunks = articleChunks(html, ids);
+  for (const c of [...site.cases, ...site.research]) {
     const chunk = chunks[c.id];
 
     // --- header > button[data-case-toggle] + div[data-case-panel]
@@ -360,15 +404,16 @@ test('Task 5: work section — 3 case accordions with panels, metrics, images, l
         assert.ok(panel.includes(f), `sunbird panel should contain ${f} image`);
       }
     }
-    if (c.id === 'dcim') {
-      // hidden-dcim-img ruling: dcim has no images at all
-      assert.ok(!/<img\b/.test(panel), 'dcim panel must contain zero <img>');
-      assert.ok(!panel.includes('img/'), 'dcim panel must reference no img/ asset');
-      assert.match(chunk, /case-stat/, 'dcim card should use a text/stat visual instead of a thumbnail');
+    if (!c.figures.length) {
+      // no-figure ruling: dcim/wu/tanet ship zero images and use the stat visual
+      assert.ok(!/<img\b/.test(panel), `${c.id} panel must contain zero <img>`);
+      assert.ok(!panel.includes('img/'), `${c.id} panel must reference no img/ asset`);
+      assert.match(chunk, /case-stat/, `${c.id} card should use a text/stat visual instead of a thumbnail`);
     }
   }
 
-  // --- thumbnails: thesis/sunbird cards carry one before the panel; dcim carries none
+  // --- thumbnails: figure-carrying cards (sunbird work, thesis research) show one
+  // before the panel; the no-figure cards show the stat visual instead
   for (const id of ['thesis', 'sunbird']) {
     const buttonPart = chunks[id].slice(0, chunks[id].indexOf('data-case-panel'));
     assert.equal((buttonPart.match(/<img\b/g) ?? []).length, 1, `${id} card should show one thumbnail`);
@@ -407,8 +452,8 @@ test('Task 5: main.ts — js class, deep links, reveal and nav sync compiled int
   assert.match(css, /:not\(\.js\)[^,{]*\.case-panel(\[[^\]]+\])*\[hidden\][^{]*\{[^}]*display:\s*(block|flex)/,
     'without html.js, hidden case panels must still render (plan: JS-disabled shows all text/images)');
 
-  // --- deep-link anchors resolve to elements even without JS
-  for (const id of ['thesis', 'sunbird', 'dcim']) {
+  // --- deep-link anchors resolve to elements even without JS (5 cards across work+research)
+  for (const id of ['sunbird', 'dcim', 'thesis', 'wu-microservices', 'tanet']) {
     assert.match(html, new RegExp(`id="case-${id}"`), `#case-${id} anchor target should exist`);
   }
 
@@ -498,23 +543,53 @@ function sectionChunk(html, id) {
   return html.slice(m.index, end);
 }
 
-test('Task 6: honors & writing — TANET banner + exactly 2 Medium article links', async () => {
+test('Research section — 3 accordion items: own thesis, senior-thesis continuation, TANET', async () => {
   const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
   assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
   const html = unesc(readFileSync(distIndex, 'utf8'));
 
-  assert.match(html, /<section[^>]*id="honors-writing"/, 'missing section#honors-writing');
-  assert.match(html, /<section[^>]*id="honors-writing"[^>]*class="[^"]*\breveal\b/,
-    'section#honors-writing should carry .reveal');
-  const chunk = sectionChunk(html, 'honors-writing');
-  assert.ok(chunk.includes(site.honorsWriting.title), 'honors-writing title should render from site.ts');
+  assert.match(html, /<section[^>]*id="research"/, 'missing section#research');
+  assert.match(html, /<section[^>]*id="research"[^>]*class="[^"]*\breveal\b/, 'section#research should carry .reveal');
+  const researchLink = site.nav.links.find((l) => l.href === '#research');
+  assert.ok(researchLink && researchLink.label === 'Research', 'nav should carry the Research label');
+  const chunk = sectionChunk(html, 'research');
+  assert.match(chunk, /section-title[^>]*>Research<\/h2>/, 'research heading comes from the nav label');
+  const rids = [...chunk.matchAll(/<article[^>]*data-case-id="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(rids, ['thesis', 'wu-microservices', 'tanet'], 'research holds 3 accordions in order');
 
-  // --- TANET banner: title + Best Paper + the pinned repo link
-  for (const h of site.honors) {
-    assert.ok(chunk.includes(h.title) && chunk.includes('Best Paper'), `honor "${h.title}" should render`);
-    assert.ok(chunk.includes(`href="${h.url}"`), `honor repo link ${h.url} should render`);
-    assert.ok(chunk.includes(h.detail), 'honor detail should render');
-  }
+  // own thesis moved over intact: Chapter-4 numbers + DOI link
+  assert.ok(chunk.includes('https://doi.org/10.6342/NTU202603218'), 'thesis DOI link should render in research');
+  assert.ok(chunk.includes('mean 0.954') && chunk.includes('27/27'), 'thesis Chapter-4 metrics should render in research');
+  // senior-thesis continuation: authored by Dong-Hong Wu, Roy's role explicit, verified DOI only
+  assert.ok(chunk.includes('Dong-Hong Wu'), 'research should name the senior thesis author');
+  assert.ok(/aggregate root/i.test(chunk) && /one-to-one/.test(chunk) && /one-to-many/.test(chunk),
+    'Roy\u2019s aggregate-root-from-entity-relationships proposal should render');
+  assert.ok(chunk.includes('https://doi.org/10.6342/NTU202503749'), 'senior thesis carries its public NTU DOI');
+  assert.ok(!/case-wu-microservices[\s\S]*?github\.com/.test(chunk.slice(chunk.indexOf('case-wu-microservices'))
+      .slice(0, chunk.slice(chunk.indexOf('case-wu-microservices')).indexOf('data-case-id="tanet"'))),
+    'wu item must not link any repo');
+  // TANET: best-paper badge + pinned repo
+  assert.ok(chunk.includes('Best Paper'), 'TANET best paper badge should render in research');
+  assert.ok(chunk.includes('github.com/roychshao/TANET2023-JPetStore-OpenTelemetry'), 'tanet repo link should render');
+
+  // Work keeps only the two project cases
+  const workChunk = sectionChunk(html, 'work');
+  assert.ok(!workChunk.includes('data-case-id="thesis"'), 'thesis must be gone from Work');
+  assert.doesNotMatch(workChunk, /doi\.org/, 'no DOI links should remain in Work');
+});
+
+test('Task 6: writing — section renamed, exactly 2 Medium article links, no honors banner', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+  const html = unesc(readFileSync(distIndex, 'utf8'));
+
+  assert.match(html, /<section[^>]*id="writing"/, 'missing section#writing');
+  assert.match(html, /<section[^>]*id="writing"[^>]*class="[^"]*\breveal\b/, 'section#writing should carry .reveal');
+  assert.doesNotMatch(html, /id="honors-writing"/, 'the Honors & Writing section must be gone');
+  assert.doesNotMatch(html, /honor/i, 'no honor-banner markup or copy should remain anywhere');
+
+  const chunk = sectionChunk(html, 'writing');
+  assert.ok(chunk.includes(site.writingSection.title), 'writing title should render from site.ts');
 
   // --- exactly the 2 writing articles, each linked once, title+date rendered
   for (const w of site.writing) {
@@ -526,6 +601,11 @@ test('Task 6: honors & writing — TANET banner + exactly 2 Medium article links
   assert.deepEqual(mediumLinks.sort(),
     [...site.writing.map((w) => w.url), site.contact.medium].sort(),
     'medium.com links should be exactly the 2 articles + the profile pill');
+
+  // --- TANET honors: research badge + About timeline only, never a Writing banner
+  assert.doesNotMatch(chunk, /Best Paper/, 'Best Paper must not appear in the Writing section');
+  assert.ok(sectionChunk(html, 'research').includes('Best Paper'), 'Best Paper lives in the Research item');
+  assert.ok(sectionChunk(html, 'about').includes('Best Paper'), 'Best Paper lives in the About timeline');
 });
 
 test('Task 6: about — story, bg image, skill pills, timeline', async () => {

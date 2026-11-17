@@ -1,10 +1,12 @@
 ---
-// Work section — three case accordions, collapsed by default (fail-open: the
-// panel's hidden state is plain `hidden`, the reveal state lives under html.js).
-// Markup contract: section#work > article[data-case-id] > header >
+// Case accordion section — used twice: Work (cases) and Research (research).
+// Items render as accordions, collapsed by default (fail-open: the panel's
+// hidden state is plain `hidden`, the reveal state lives under html.js).
+// Markup contract: section#<id> > article[data-case-id] > header >
 // button[data-case-toggle] + div[data-case-panel]. All copy from site.ts;
-// thesis/sunbird cards get a thumbnail, dcim a text/stat visual (no images).
-import { cases, nav } from '../data/site';
+// figure-carrying items get a thumbnail, no-figure items a text/stat visual.
+import { nav } from '../data/site';
+import type { Case } from '../data/site';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import CaseDetail from './CaseDetail.astro';
@@ -19,7 +21,7 @@ import sunbirdRouting from '../assets/img/sunbird/03-fluentd-routing.png';
 interface Fig { src: ImageMetadata; alt: string; width: number }
 // Figure copy (alt, order) lives in site.ts; this map only resolves each figure
 // key to its astro:assets import + render width (static imports can't come from
-// data). dcim has no figures by design (Global Constraints: no images for that case).
+// data). Items with no figures (dcim, wu-microservices, tanet) ship no images.
 const figureAssets: Record<string, { src: ImageMetadata; width: number }> = {
   similarity: { src: thesisSimilarity, width: 960 },
   architecture: { src: thesisArch, width: 760 },
@@ -29,12 +31,18 @@ const figureAssets: Record<string, { src: ImageMetadata; width: number }> = {
   routing: { src: sunbirdRouting, width: 760 },
 };
 
-const workLabel = nav.links.find((l) => l.href === '#work')?.label ?? '';
+interface Props {
+  /** section anchor id ('work' | 'research'); the heading is the nav link label */
+  id: string;
+  items: Case[];
+}
+const { id, items } = Astro.props;
+const heading = nav.links.find((l) => l.href === `#${id}`)?.label ?? '';
 ---
-<section id="work" class="work reveal">
-  <h2 class="section-title">{workLabel}</h2>
+<section id={id} class:list={['case-section', 'reveal']}>
+  <h2 class="section-title">{heading}</h2>
   <div class="case-stack">
-    {cases.map((c) => {
+    {items.map((c) => {
       const figs: Fig[] = c.figures.map((f) => {
         const a = figureAssets[f.key];
         return { src: a.src, width: a.width, alt: f.alt };
@@ -81,7 +89,7 @@ const workLabel = nav.links.find((l) => l.href === '#work')?.label ?? '';
 </section>
 <script src="../scripts/main.ts"></script>
 <style>
-  .work {
+  .case-section {
     max-width: 62rem;
     margin: 0 auto;
     padding: var(--space-section) clamp(1rem, 4vw, 2rem);
