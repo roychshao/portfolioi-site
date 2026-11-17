@@ -1,0 +1,42 @@
+{
+ "generated": "2026-11-17",
+ "note": "final curated assets",
+ "files": [
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/_manifest.json",
+   "kb": 3
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/about-bg.jpg",
+   "kb": 5128
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/about-portrait.jpg",
+   "kb": 389
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/sunbird/01-arch-traces.png",
+   "kb": 116
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/sunbird/02-collector-pipeline.png",
+   "kb": 514
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/sunbird/03-fluentd-routing.png",
+   "kb": 144
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/thesis/01-dcim-architecture.png",
+   "kb": 153
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/thesis/02-pipeline-pattern.png",
+   "kb": 537
+  },
+  {
+   "path": "/workspace/artifacts/portfolio-site/assets/img/thesis/03-similarity-dist.png",
+   "kb": 27
+  }
+ ]
+}
