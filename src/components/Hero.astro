@@ -20,7 +20,8 @@ import portrait from '../assets/img/about-portrait.jpg';
     <div class="blob">
       <Image
         src={portrait}
-        width={900}
+        widths={[320, 640]}
+        sizes="(max-width: 444px) 72vw, 320px"
         alt={`Portrait of ${profile.name}`}
         loading="eager"
         fetchpriority="high"

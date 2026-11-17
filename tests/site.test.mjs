@@ -468,11 +468,17 @@ test('Task 4: hero renders from data with eager optimized portrait (LCP)', async
   const portrait = imgs.filter((t) => /about-portrait/.test(t));
   assert.equal(portrait.length, 1, 'expected exactly one about-portrait <img>');
   const tag = portrait[0];
+  // responsive srcset (Task 7): the render cap lives in the srcset descriptors,
+  // the width/height attributes carry the intrinsic size for aspect-ratio boxes
   const w = +(tag.match(/\bwidth="(\d+)"/) ?? [])[1];
   const h = +(tag.match(/\bheight="(\d+)"/) ?? [])[1];
-  assert.ok(w > 0 && w <= 900, `portrait width ${w} should be >0 and <=900`);
+  assert.ok(w > 0, `portrait width ${w} should be >0`);
   assert.ok(h > 0 && Math.abs(h - (w * 1477 / 1108)) <= 2,
     `portrait height ${h} should match source aspect ratio at width ${w}`);
+  const srcsetWidths = [...(tag.match(/\b(\d+)w\b/g) ?? [])].map((m) => parseInt(m));
+  assert.ok(srcsetWidths.length > 0, 'portrait should ship a responsive srcset');
+  assert.ok(Math.max(...srcsetWidths) <= 900,
+    `portrait srcset cap ${Math.max(...srcsetWidths)}w should be <=900`);
   assert.match(tag, /fetchpriority="high"/, 'LCP portrait must have fetchpriority="high"');
   assert.doesNotMatch(tag, /loading="lazy"/, 'hero portrait must not be lazy-loaded');
   assert.match(tag, /alt="[^"]+"/, 'portrait needs non-empty alt text');
@@ -618,8 +624,14 @@ test('Task 6: banned strings swept from every dist text file', () => {
       else if (textExt.has(path.extname(e.name).toLowerCase())) files.push(p);
     }
   })(path.join(root, 'dist'));
-  assert.ok(files.includes(distIndex) && files.length >= 2,
-    'sanity: the sweep must actually cover dist/index.html plus emitted assets');
+  // Task 7 (build.inlineStylesheets: 'always'): when every style/script is
+  // inlined into the single HTML document, there may be no emitted .css/.js
+  // files left — then index.html itself is the complete human-readable output.
+  const coverageOk =
+    files.length >= 2 ||
+    (files.length === 1 && /<style[\s>]/.test(readFileSync(distIndex, 'utf8')));
+  assert.ok(coverageOk,
+    'sanity: the sweep must cover dist/index.html plus every emitted text asset (or those assets are inlined into the HTML)');
   for (const f of files) {
     const hay = readFileSync(f, 'utf8').toLowerCase();
     for (const b of banned) {

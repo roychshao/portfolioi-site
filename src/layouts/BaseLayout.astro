@@ -2,13 +2,15 @@
 // BaseLayout — the single document shell: SEO/OG head, self-hosted fonts, global.css.
 // All copy comes from src/data/site.ts (single source of truth).
 import '../styles/global.css';
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/600.css';
-import '@fontsource/inter/700.css';
-import '@fontsource/inter/800.css';
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/700.css';
+// Latin-only subsets: the site copy is English (Global Constraints), so the
+// latin-ext faces/urls (5 x ~36 KB) never ship or get referenced.
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-500.css';
+import '@fontsource/inter/latin-600.css';
+import '@fontsource/inter/latin-700.css';
+import '@fontsource/inter/latin-800.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-700.css';
 import { profile, hero } from '../data/site';
 
 interface Props {
