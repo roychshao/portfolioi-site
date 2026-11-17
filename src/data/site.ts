@@ -19,6 +19,12 @@ export interface CaseBody {
   approach: ApproachStep[];
   results: ResultMetric[];
 }
+// Figure copy lives here; the component keeps only the key → astro:assets
+// import map and the render width (static imports can't come from data).
+export interface CaseFigure {
+  key: string;
+  alt: string;
+}
 export interface Case {
   id: string;
   title: string;
@@ -26,6 +32,7 @@ export interface Case {
   badges: string[];
   techTags: string[];
   links: CaseLink[];
+  figures: CaseFigure[];
   body: CaseBody;
 }
 
@@ -57,6 +64,11 @@ export interface HonorItem {
 // Repeated copy lives in exactly one place; every consumer interpolates from here.
 const EMAIL = 'roych.shao@gmail.com';
 const GITHUB_URL = 'https://github.com/roychshao';
+// Thesis headline stats — referenced by both results and the similarity figure's
+// alt so no consumer restates them as a second copy.
+const THESIS_N = '308';
+const THESIS_MEAN = '0.954';
+const THESIS_MEDIAN = '0.966';
 
 export const profile = {
   name: 'Roy Shao (Ching-Hsiang Shao)',
@@ -91,12 +103,18 @@ export const cases: Case[] = [
     title: 'Turning Natural Language into Real System Queries',
     tagline:
       "My master's thesis: a stage-based LLM agentic workflow — with a use-case spec as the middle representation — that answers real DCIM users' questions on a production data-center system.",
-    badges: ['mean 0.954 spec similarity · n=308', 'top-3 100% method matching', '27/27 final reply checks'],
+    badges: [`mean ${THESIS_MEAN} spec similarity · n=${THESIS_N}`, 'top-3 100% method matching', '27/27 final reply checks'],
     techTags: ['Python', 'LlamaIndex', 'vLLM', 'Qdrant', 'LLM Agents'],
     links: [{ label: 'Paper (DOI)', url: 'https://doi.org/10.6342/NTU202603218' }],
+    // Display order: the headline similarity chart leads the panel.
+    figures: [
+      { key: 'similarity', alt: `Regenerated spec similarity distribution over ${THESIS_N} real DCIM queries (mean ${THESIS_MEAN}, median ${THESIS_MEDIAN})` },
+      { key: 'architecture', alt: 'The commercial DCIM system architecture the agentic workflow targets' },
+      { key: 'pipeline', alt: 'Stage-based agentic workflow pipeline: initial, controller, computation, reply' },
+    ],
     body: {
       challenge:
-        'Operators of a commercial DCIM (data-center infrastructure management) system can only get answers by navigating dense query UIs. Could natural language reliably drive a real management system? I built and validated a stage-based LLM agentic workflow that translates user queries into correct system behavior, independently owning the full pipeline — from dataset construction to the automated workflow. Evaluation used 308 real DCIM user queries with manually annotated use-case specs, served by Gemma-4-31B-it via vLLM (temperature 0.0).',
+        'Operators of a commercial DCIM (data-center infrastructure management) system can only get answers by navigating dense query UIs. Could natural language reliably drive a real management system? I built and validated a stage-based LLM agentic workflow that translates user queries into correct system behavior, independently owning the full pipeline — from dataset construction to the automated workflow. Evaluation used ' + THESIS_N + ' real DCIM user queries with manually annotated use-case specs, served by Gemma-4-31B-it via vLLM (temperature 0.0).',
       approach: [
         {
           title: 'Initial',
@@ -116,8 +134,8 @@ export const cases: Case[] = [
         },
       ],
       results: [
-        { metric: 'n=308', label: 'real DCIM user queries with manually annotated use-case specs (Gemma-4-31B-it @ vLLM, temp 0.0)' },
-        { metric: 'mean 0.954', label: 'regenerated spec similarity (median 0.966, σ 0.030)' },
+        { metric: `n=${THESIS_N}`, label: 'real DCIM user queries with manually annotated use-case specs (Gemma-4-31B-it @ vLLM, temp 0.0)' },
+        { metric: `mean ${THESIS_MEAN}`, label: `regenerated spec similarity (median ${THESIS_MEDIAN}, σ 0.030)` },
         { metric: '96.02%', label: 'controller method matching — semantic retrieval top-10 over 929 steps' },
         { metric: 'top-1 95.05%', label: 'controller method matching with keyword boost added' },
         { metric: 'top-3 100%', label: 'controller method matching with keyword boost added' },
@@ -135,6 +153,11 @@ export const cases: Case[] = [
     badges: ['3 demos · 3 source branches'],
     techTags: ['OpenTelemetry', 'Kubernetes', 'Docker', 'WebSocket', 'Java'],
     links: [{ label: 'Source (GitHub)', url: `${GITHUB_URL}/Sunbird-Container-Observability-Project` }],
+    figures: [
+      { key: 'traces', alt: 'Live trace stream from the Sunbird WebSocket dashboard' },
+      { key: 'collector', alt: 'Push and pull OpenTelemetry collector topologies on Kubernetes' },
+      { key: 'routing', alt: 'Fluentd routing configuration between collector modes' },
+    ],
     body: {
       challenge:
         'In my NCCU SE Lab research (Sunbird-NCCU), the open question was how to collect container telemetry on Kubernetes at meaningful fidelity without taxing the workloads — and which collection model actually behaves better once clusters scale.',
@@ -166,6 +189,8 @@ export const cases: Case[] = [
     badges: ['100+ Cypress E2E · adopted as lab standard'],
     techTags: ['Cypress', 'JavaScript / TypeScript', 'CI/CD'],
     links: [{ label: 'GitHub profile', url: GITHUB_URL }],
+    // No images by design (Global Constraints: dcim ships zero figures).
+    figures: [],
     body: {
       challenge:
         'A commercial enterprise DCIM platform needed repeatable regression verification against vendor specs (Jan–Feb 2025, research assistant). Manual verification was slow and unfalsifiable — nobody could say what "still works" meant after a vendor change.',

@@ -17,20 +17,16 @@ import sunbirdCollector from '../assets/img/sunbird/02-collector-pipeline.png';
 import sunbirdRouting from '../assets/img/sunbird/03-fluentd-routing.png';
 
 interface Fig { src: ImageMetadata; alt: string; width: number }
-// Display order per case — the headline similarity chart leads the thesis panel.
-// dcim has no figures by design (Global Constraints: no images for that case).
-const figures: Record<string, Fig[]> = {
-  thesis: [
-    { src: thesisSimilarity, alt: 'Regenerated spec similarity distribution over 308 real DCIM queries (mean 0.954, median 0.966)', width: 960 },
-    { src: thesisArch, alt: 'The commercial DCIM system architecture the agentic workflow targets', width: 760 },
-    { src: thesisPipeline, alt: 'Stage-based agentic workflow pipeline: initial, controller, computation, reply', width: 760 },
-  ],
-  sunbird: [
-    { src: sunbirdTraces, alt: 'Live trace stream from the Sunbird WebSocket dashboard', width: 760 },
-    { src: sunbirdCollector, alt: 'Push and pull OpenTelemetry collector topologies on Kubernetes', width: 760 },
-    { src: sunbirdRouting, alt: 'Fluentd routing configuration between collector modes', width: 760 },
-  ],
-  dcim: [],
+// Figure copy (alt, order) lives in site.ts; this map only resolves each figure
+// key to its astro:assets import + render width (static imports can't come from
+// data). dcim has no figures by design (Global Constraints: no images for that case).
+const figureAssets: Record<string, { src: ImageMetadata; width: number }> = {
+  similarity: { src: thesisSimilarity, width: 960 },
+  architecture: { src: thesisArch, width: 760 },
+  pipeline: { src: thesisPipeline, width: 760 },
+  traces: { src: sunbirdTraces, width: 760 },
+  collector: { src: sunbirdCollector, width: 760 },
+  routing: { src: sunbirdRouting, width: 760 },
 };
 
 const workLabel = nav.links.find((l) => l.href === '#work')?.label ?? '';
@@ -39,7 +35,10 @@ const workLabel = nav.links.find((l) => l.href === '#work')?.label ?? '';
   <h2 class="section-title">{workLabel}</h2>
   <div class="case-stack">
     {cases.map((c) => {
-      const figs = figures[c.id] ?? [];
+      const figs: Fig[] = c.figures.map((f) => {
+        const a = figureAssets[f.key];
+        return { src: a.src, width: a.width, alt: f.alt };
+      });
       const thumb = figs[0];
       const stat = c.body.results[0]?.metric ?? '';
       return (

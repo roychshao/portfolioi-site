@@ -82,7 +82,7 @@ test('site.ts data invariants', async () => {
   // --- cases: exactly 3, in order, ids thesis|sunbird|dcim
   assert.deepEqual(site.cases.map((c) => c.id), ['thesis', 'sunbird', 'dcim']);
   for (const c of site.cases) {
-    for (const k of ['id', 'title', 'tagline', 'badges', 'techTags', 'links', 'body']) {
+    for (const k of ['id', 'title', 'tagline', 'badges', 'techTags', 'links', 'figures', 'body']) {
       assert.ok(k in c, `case ${c.id} missing field ${k}`);
     }
     assert.ok(Array.isArray(c.badges) && c.badges.every((b) => typeof b === 'string'));
@@ -90,6 +90,29 @@ test('site.ts data invariants', async () => {
     assert.ok(c.body.challenge.length > 0);
     assert.ok(c.body.approach.length > 0 && c.body.approach.every((s) => s.title && s.text));
     assert.ok(c.body.results.length > 0 && c.body.results.every((r) => r.metric && r.label));
+  }
+
+  // --- figures: alt prose lives in site.ts (components hold only key→import maps
+  // and render widths); counts per case must be thesis 3 / sunbird 3 / dcim 0
+  assert.deepEqual(site.cases.map((c) => c.figures.length), [3, 3, 0],
+    'site.ts figures counts should be 3/3/0');
+  for (const c of site.cases) {
+    assert.ok(c.figures.every((f) => typeof f.key === 'string' && f.key && typeof f.alt === 'string' && f.alt),
+      `case ${c.id}: every figure needs a non-empty key and alt`);
+    assert.equal(new Set(c.figures.map((f) => f.key)).size, c.figures.length,
+      `case ${c.id}: figure keys must be unique`);
+  }
+  // the similarity-dist alt restates headline stats — it must carry the same
+  // derived values as results, not a second hand-typed copy
+  {
+    const simAlt = site.cases[0].figures[0].alt;
+    const res = site.cases[0].body.results;
+    const n = res[0].metric.replace(/^n=/, '');
+    const mean = res[1].metric.replace(/^mean /, '');
+    const median = res[1].label.match(/median ([\d.]+)/)[1];
+    assert.ok(simAlt.includes(`over ${n} real DCIM queries`) &&
+      simAlt.includes(`mean ${mean}`) && simAlt.includes(`median ${median}`),
+      'similarity alt must interpolate n/mean/median from the results source values');
   }
 
   // --- thesis results carry the Chapter 4 numbers verbatim
@@ -299,6 +322,11 @@ test('Task 5: work section — 3 case accordions with panels, metrics, images, l
       assert.match(tag, /\bheight="\d+"/, `${c.id}: panel img needs height`);
       assert.match(tag, /loading="lazy"/, `${c.id}: below-fold panel img must be lazy`);
     }
+    // --- panel img alts are the site.ts figure alts, interpolated at render
+    for (const f of c.figures) {
+      assert.ok(panel.includes(`alt="${f.alt}"`),
+        `${c.id}: panel img should carry the site.ts figure alt for "${f.key}"`);
+    }
     if (c.id === 'thesis') {
       assert.equal(panelImgs.length, 3, 'thesis panel should embed its 3 images');
       assert.match(panel, /<img\b[^>]*similarity-dist/, 'thesis panel must contain the similarity-dist image');
@@ -325,6 +353,15 @@ test('Task 5: work section — 3 case accordions with panels, metrics, images, l
     const buttonPart = chunks[id].slice(0, chunks[id].indexOf('data-case-panel'));
     assert.equal((buttonPart.match(/<img\b/g) ?? []).length, 1, `${id} card should show one thumbnail`);
     assert.doesNotMatch(buttonPart, /loading="eager"|fetchpriority="high"/, `${id} thumbnail must be lazy`);
+  }
+
+  // --- single-source rule: components embed no prose — no literal (non-empty) alt
+  // strings anywhere in src/components/*.astro; alt must be interpolated (alt={...})
+  const compsDir = path.join(root, 'src', 'components');
+  for (const f of readdirSync(compsDir, { withFileTypes: true }).filter((e) => e.isFile() && e.name.endsWith('.astro'))) {
+    const compSrc = readFileSync(path.join(compsDir, f.name), 'utf8');
+    assert.doesNotMatch(compSrc, /\balt\s*[:=]\s*(["'])[^"']+\1/,
+      `${f.name} hardcodes a literal alt string — figure alt prose belongs in site.ts`);
   }
 });
 
