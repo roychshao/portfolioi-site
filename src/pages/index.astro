@@ -1,9 +1,13 @@
 ---
-// Home page — sections compose in Tasks 4-7; head/shell live in BaseLayout.
+// Home page — Nav + Hero live here (Task 4); later sections compose in Tasks 5-7.
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import { profile } from '../data/site';
 ---
-<BaseLayout>
+<BaseLayout title={`${profile.name} — ${profile.role}`}>
+  <Nav />
   <main id="main">
-    <p>Site under construction.</p>
+    <Hero />
   </main>
 </BaseLayout>

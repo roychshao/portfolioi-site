@@ -1,0 +1,102 @@
+---
+// Hero: status pill + name h1 + sub + solid/outline CTAs, portrait on the right.
+// The portrait is the LCP element: astro:assets Image, eager, fetchpriority=high,
+// NOT lazy, no .reveal class (Task 5 owns reveal gating elsewhere).
+import { hero, profile } from '../data/site';
+import { Image } from 'astro:assets';
+import portrait from '../assets/img/about-portrait.jpg';
+---
+<section class="hero" id="top">
+  <div class="hero-copy">
+    <span class="pill hero-status"><span class="dot" aria-hidden="true"></span>{hero.status}</span>
+    <h1 class="hero-name">{hero.name} <span class="wave" aria-hidden="true">👋</span></h1>
+    <p class="hero-sub">{hero.sub}</p>
+    <div class="hero-ctas">
+      <a class="btn btn-solid" href={hero.ctas[0].href}>{hero.ctas[0].label}</a>
+      <a class="btn btn-outline" href={hero.ctas[1].href}>{hero.ctas[1].label}</a>
+    </div>
+  </div>
+  <div class="hero-art">
+    <div class="blob">
+      <Image
+        src={portrait}
+        width={900}
+        alt={`Portrait of ${profile.name}`}
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+  </div>
+</section>
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem) var(--space-section);
+  }
+
+  @media (min-width: 768px) {
+    .hero { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); }
+  }
+
+  .hero-status { margin-bottom: 1.25rem; }
+
+  .dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: var(--c-primary);
+    flex: none;
+  }
+
+  .hero-name {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+  }
+
+  .wave { font-weight: 400; }
+
+  .hero-sub {
+    max-width: 34rem;
+    margin-bottom: 1.75rem;
+    color: var(--c-muted);
+    font-size: clamp(1.05rem, 2vw, 1.2rem);
+  }
+
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1.4rem;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    border: 1px solid transparent;
+  }
+  .btn:hover { text-decoration: none; }
+
+  .btn-solid { background: var(--c-primary); color: var(--c-primary-ink); }
+  .btn-solid:hover { background: var(--c-ink); }
+
+  .btn-outline { border-color: var(--c-line); color: var(--c-ink); background: var(--c-card); }
+  .btn-outline:hover { border-color: var(--c-primary); color: var(--c-primary); }
+
+  .hero-art { display: flex; justify-content: center; }
+
+  .blob {
+    width: min(20rem, 72vw);
+    overflow: hidden;
+    border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+    background: var(--c-primary);
+    box-shadow: var(--shadow-card);
+  }
+  .blob img { width: 100%; height: auto; }
+</style>

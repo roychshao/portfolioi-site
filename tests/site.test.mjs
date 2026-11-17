@@ -168,3 +168,93 @@ test('site.ts data invariants', async () => {
   assert.ok(!existsSync(path.join(root, 'assets/img/about-portrait.jpg')),
     'images should be gone from assets/img/ after the git mv');
 });
+
+test('Task 4: sticky nav renders anchors, wordmark, icons, and mobile toggle', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+  const html = readFileSync(distIndex, 'utf8');
+
+  // helper: all emitted CSS (linked files + inline <style>)
+  const cssFiles = [];
+  (function walk(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.css')) cssFiles.push(p);
+    }
+  })(path.join(root, 'dist'));
+  const css = cssFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
+    + '\n' + (html.match(/<style[^>]*>[\s\S]*?<\/style>/g) ?? []).join('\n');
+
+  // --- anchor links straight from nav data, sticky capsule in CSS
+  for (const href of ['#work', '#about', '#contact']) {
+    assert.match(html, new RegExp(`href="${href}"`), `nav should link ${href}`);
+  }
+  assert.match(css, /(site-nav|nav-capsule|nav-inner)[^{]*\{[^}]*position:\s*sticky/i,
+    'nav CSS should use position: sticky');
+
+  // --- wordmark `>_ Roy Shao` in monospace
+  assert.match(html, /&gt;_ Roy Shao|>_ Roy Shao/, 'missing wordmark ">_ Roy Shao"');
+  assert.match(css, /wordmark[^{]*\{[^}]*var\(--font-mono\)/i, 'wordmark should use the mono token');
+
+  // --- GitHub + Mail as inline SVG links (no img tags for icons)
+  assert.match(html, new RegExp(`href="${site.profile.github.replace(/[/.]/g, '\\$&')}"`),
+    'nav should link the GitHub profile');
+  assert.match(html, new RegExp(`href="${site.contact.email.replace(/[/.]/g, '\\$&')}"`),
+    'nav should link mailto: derived from profile.email');
+  const svgs = html.match(/<svg\b[^>]*>/g) ?? [];
+  assert.ok(svgs.length >= 2, 'GitHub and Mail icons should be inline <svg> elements');
+
+  // --- mobile hamburger button with aria-expanded + toggle script present
+  assert.match(html, /<button[^>]*aria-expanded="false"/, 'missing menu button with aria-expanded');
+  assert.match(html, /aria-controls="[^"]+"/, 'menu button should reference the panel via aria-controls');
+  assert.match(html, /aria-expanded/, 'toggle script should manipulate aria-expanded');
+
+  // --- JS budget including inline scripts: dist .js files + <script> bodies < 30 KB
+  const jsFiles = [];
+  (function walkJs(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walkJs(p);
+      else if (e.name.endsWith('.js')) jsFiles.push(p);
+    }
+  })(path.join(root, 'dist'));
+  const inlineJs = (html.match(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g) ?? [])
+    .reduce((n, s) => n + s.replace(/^<script[^>]*>|<\/script>$/g, '').length, 0);
+  const jsTotal = jsFiles.reduce((n, f) => n + statSync(f).size, 0) + inlineJs;
+  assert.ok(jsTotal < 30 * 1024, `page JS (files + inline) is ${(jsTotal / 1024).toFixed(1)} KB — budget is 30 KB`);
+});
+
+test('Task 4: hero renders from data with eager optimized portrait (LCP)', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  const html = readFileSync(distIndex, 'utf8');
+
+  // --- all hero copy comes from site.ts (no hardcoded component text)
+  assert.ok(html.includes(site.hero.status), 'hero.status pill text should render');
+  assert.ok(html.includes(site.hero.name), 'hero.name should render');
+  assert.ok(html.includes(site.hero.sub), 'hero.sub should render');
+  assert.match(html, /<h1[^>]*>[\s\S]*?👋[\s\S]*?<\/h1>/, 'h1 should include the waving hand');
+  assert.match(html, /class="[^"]*\bpill\b[^"]*"[^>]*>[\s\S]*?NTU CSIE MS/,
+    'status should sit in a .pill element');
+
+  // --- CTAs: both labels, first anchors #work, second is the derived mailto
+  assert.deepEqual(site.hero.ctas.map((c) => c.href), ['#work', `mailto:${site.profile.email}`]);
+  for (const cta of site.hero.ctas) assert.ok(html.includes(cta.label), `missing CTA label "${cta.label}"`);
+  assert.ok(html.includes(`href="mailto:${site.profile.email}"`), 'missing derived mailto CTA');
+
+  // --- exactly one portrait <img> from astro:assets, eager + dimensioned (LCP image)
+  const imgs = html.match(/<img\b[^>]*>/g) ?? [];
+  const portrait = imgs.filter((t) => /about-portrait/.test(t));
+  assert.equal(portrait.length, 1, 'expected exactly one about-portrait <img>');
+  const tag = portrait[0];
+  const w = +(tag.match(/\bwidth="(\d+)"/) ?? [])[1];
+  const h = +(tag.match(/\bheight="(\d+)"/) ?? [])[1];
+  assert.ok(w > 0 && w <= 900, `portrait width ${w} should be >0 and <=900`);
+  assert.ok(h > 0 && Math.abs(h - (w * 1477 / 1108)) <= 2,
+    `portrait height ${h} should match source aspect ratio at width ${w}`);
+  assert.match(tag, /fetchpriority="high"/, 'LCP portrait must have fetchpriority="high"');
+  assert.doesNotMatch(tag, /loading="lazy"/, 'hero portrait must not be lazy-loaded');
+  assert.match(tag, /alt="[^"]+"/, 'portrait needs non-empty alt text');
+});
+
+

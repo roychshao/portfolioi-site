@@ -1,0 +1,158 @@
+---
+// Sticky capsule nav: mono wordmark + anchor links + GitHub/Mail inline SVGs.
+// <768px: hamburger button toggling aria-expanded; panel also opens on
+// :focus-within so it degrades fail-open without JS. No html.js gating here —
+// that class belongs to Task 5's main.ts; this script is standalone.
+import { nav, contact } from '../data/site';
+import Icon from './Icons.astro';
+---
+<header class="site-nav">
+  <nav class="nav-capsule" aria-label="Primary">
+    <a class="wordmark" href="#top">{nav.brand}</a>
+    <button
+      class="nav-toggle"
+      id="nav-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="nav-menu"><span class="ic ic-open"><Icon name="menu" /></span><span
+        class="ic ic-close"><Icon name="close" /></span><span class="sr-only">Menu</span>
+    </button>
+    <div class="nav-menu" id="nav-menu">
+      <ul class="nav-links">
+        {nav.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+      <div class="nav-social">
+        <a href={contact.github} aria-label="GitHub" target="_blank" rel="noopener noreferrer"><Icon
+            name="github"
+          /></a>
+        <a href={contact.email} aria-label="Email"><Icon name="mail" /></a>
+      </div>
+    </div>
+  </nav>
+</header>
+<script is:inline>
+  (function () {
+    var btn = document.getElementById('nav-toggle');
+    var menu = document.getElementById('nav-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function () {
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!open));
+      menu.classList.toggle('is-open', !open);
+    });
+    menu.addEventListener('click', function (e) {
+      if (e.target && e.target.closest && e.target.closest('a')) {
+        btn.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('is-open');
+      }
+    });
+  })();
+</script>
+<style>
+  .site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 0.75rem clamp(1rem, 4vw, 2rem) 0;
+  }
+
+  .nav-capsule {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 0.45rem 0.6rem 0.45rem 1.1rem;
+    background: var(--c-card);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-card);
+  }
+
+  .wordmark {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--c-ink);
+    white-space: nowrap;
+  }
+  .wordmark:hover { text-decoration: none; color: var(--c-primary); }
+
+  .nav-links { display: flex; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+
+  .nav-links a {
+    display: inline-block;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-pill);
+    color: var(--c-ink);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .nav-links a:hover { background: var(--c-bg); color: var(--c-primary); text-decoration: none; }
+
+  .nav-social { display: flex; align-items: center; gap: 0.15rem; }
+  .nav-social a {
+    display: inline-flex;
+    padding: 0.4rem;
+    border-radius: var(--radius-pill);
+    color: var(--c-muted);
+  }
+  .nav-social a:hover { color: var(--c-primary); background: var(--c-bg); }
+
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.55rem;
+    background: none;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    color: var(--c-ink);
+    cursor: pointer;
+    font: inherit;
+  }
+  .ic-close { display: none; }
+  .nav-toggle[aria-expanded='true'] .ic-open { display: none; }
+  .nav-toggle[aria-expanded='true'] .ic-close { display: inline-flex; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0; border: 0;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 767px) {
+    .nav-toggle { display: inline-flex; }
+
+    .nav-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+      min-width: 12rem;
+      padding: 0.9rem 1rem;
+      background: var(--c-card);
+      border: 1px solid var(--c-line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+    }
+    /* fail-open: keyboard focus alone reveals the panel, no JS required */
+    .nav-capsule:focus-within .nav-menu,
+    .nav-menu.is-open { display: flex; }
+
+    .nav-links { flex-direction: column; gap: 0.1rem; }
+    .nav-social { justify-content: flex-start; }
+  }
+
+  @media (min-width: 768px) {
+    .nav-menu { display: flex; align-items: center; gap: 0.75rem; }
+  }
+</style>
