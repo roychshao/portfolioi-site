@@ -87,6 +87,18 @@ test('site.ts data invariants', async () => {
     assert.ok(!dump.includes(b.toLowerCase()), `site data must never contain banned token "${b}"`);
   }
 
+  // --- single-source-of-truth consistency: repeated copy must derive from the shared constants
+  assert.equal(site.hero.name, site.profile.name);
+  assert.equal(site.hero.ctas[1].href, `mailto:${site.profile.email}`);
+  assert.equal(site.contact.email, `mailto:${site.profile.email}`);
+  for (const u of [site.contact.github, site.cases[2].links[0].url]) {
+    assert.equal(u, site.profile.github, 'GitHub profile URLs must all equal the shared profile URL');
+  }
+  for (const u of [site.cases[1].links[0].url, ...site.honors.map((h) => h.url)]) {
+    assert.ok(u === site.profile.github || u.startsWith(`${site.profile.github}/`),
+      `GitHub URL "${u}" must derive from the shared profile URL`);
+  }
+
   // --- images moved into src/assets for astro:assets (_manifest stays public)
   assert.ok(existsSync(path.join(root, 'src/assets/img/thesis/03-similarity-dist.png')),
     'thesis images should live under src/assets/img/');

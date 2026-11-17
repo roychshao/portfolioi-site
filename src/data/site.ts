@@ -54,12 +54,16 @@ export interface HonorItem {
   url: string;
 }
 
+// Repeated copy lives in exactly one place; every consumer interpolates from here.
+const EMAIL = 'roych.shao@gmail.com';
+const GITHUB_URL = 'https://github.com/roychshao';
+
 export const profile = {
   name: 'Roy Shao (Ching-Hsiang Shao)',
   role: 'Software Engineer — Observability · Microservices · LLM Agents',
   location: 'Taipei, Taiwan',
-  email: 'roych.shao@gmail.com',
-  github: 'https://github.com/roychshao',
+  email: EMAIL,
+  github: GITHUB_URL,
 };
 
 export const nav = {
@@ -72,12 +76,12 @@ export const nav = {
 };
 
 export const hero = {
-  name: 'Roy Shao (Ching-Hsiang Shao)',
+  name: profile.name,
   status: 'NTU CSIE MS · Software Engineer',
   sub: 'Building useful things with code — from systems observability to LLM agents.',
   ctas: [
     { label: 'View Work', href: '#work' },
-    { label: 'Get in touch', href: 'mailto:roych.shao@gmail.com' },
+    { label: 'Get in touch', href: `mailto:${EMAIL}` },
   ],
 };
 
@@ -130,7 +134,7 @@ export const cases: Case[] = [
       'A container-observability PoC: two OpenTelemetry collector topologies for Kubernetes — push (OTLP from apps) and pull (scraping components) — compared with a live WebSocket dashboard.',
     badges: ['3 demos · 3 source branches'],
     techTags: ['OpenTelemetry', 'Kubernetes', 'Docker', 'WebSocket', 'Java'],
-    links: [{ label: 'Source (GitHub)', url: 'https://github.com/roychshao/Sunbird-Container-Observability-Project' }],
+    links: [{ label: 'Source (GitHub)', url: `${GITHUB_URL}/Sunbird-Container-Observability-Project` }],
     body: {
       challenge:
         'In my NCCU SE Lab research (Sunbird-NCCU), the open question was how to collect container telemetry on Kubernetes at meaningful fidelity without taxing the workloads — and which collection model actually behaves better once clusters scale.',
@@ -161,7 +165,7 @@ export const cases: Case[] = [
       'As a research assistant, I turned a vendor\u2019s functional spec into a 100+ test Cypress E2E suite — now the lab\u2019s standing regression harness for an enterprise platform.',
     badges: ['100+ Cypress E2E · adopted as lab standard'],
     techTags: ['Cypress', 'JavaScript / TypeScript', 'CI/CD'],
-    links: [{ label: 'GitHub profile', url: 'https://github.com/roychshao' }],
+    links: [{ label: 'GitHub profile', url: GITHUB_URL }],
     body: {
       challenge:
         'A commercial enterprise DCIM platform needed repeatable regression verification against vendor specs (Jan–Feb 2025, research assistant). Manual verification was slow and unfalsifiable — nobody could say what "still works" meant after a vendor change.',
@@ -193,7 +197,7 @@ export const honors: HonorItem[] = [
     detail:
       'First author — OpenTelemetry instrumentation via AOP (JPetStore case), NCCU SE Lab. Repo: TANET2023-JPetStore-OpenTelemetry.',
     year: '2023',
-    url: 'https://github.com/roychshao/TANET2023-JPetStore-OpenTelemetry',
+    url: `${GITHUB_URL}/TANET2023-JPetStore-OpenTelemetry`,
   },
 ];
 
@@ -217,8 +221,8 @@ export const skills = {
 };
 
 export const contact = {
-  email: 'mailto:roych.shao@gmail.com',
-  github: 'https://github.com/roychshao',
+  email: `mailto:${EMAIL}`,
+  github: GITHUB_URL,
   medium: 'https://medium.com/@roych.shao',
 };
 
