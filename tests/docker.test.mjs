@@ -62,11 +62,11 @@ test('nginx.conf: gzip on, no privileged 80, listen 8080, cache rules', () => {
   assert.doesNotMatch(gzipTypes, /woff2|webp/, 'woff2/webp must be excluded from gzip_types (already compressed)');
 });
 
-test('docker-compose.yml: SITE build arg from DOMAIN, 8080:8080, restart policy', () => {
+test('docker-compose.yml: SITE build arg from DOMAIN, loopback host port with HOST_PORT override, restart policy', () => {
   const c = read(compose);
   assert.match(c, /name:\s*portfolio-site/, 'compose should be named portfolio-site');
   assert.match(c, /SITE:\s*\$\{DOMAIN:-https:\/\/example\.com\}/, 'build.args SITE must default to ${DOMAIN:-https://example.com}');
-  assert.match(c, /-\s*"?8080:8080"?/, 'ports must map "8080:8080" (no privileged 80)');
+  assert.match(c, /"127\.0\.0\.1:\$\{HOST_PORT:-8404\}:8080"/, 'ports must bind loopback 127.0.0.1 with HOST_PORT override (default 8404) to container 8080');
   assert.doesNotMatch(c, /(?:^|[\s"'])80:80(?=$|[\s"'])/m, 'must NOT publish port 80 directly');
   assert.match(c, /restart:\s*unless-stopped/, 'restart policy should be unless-stopped');
 });
@@ -86,7 +86,8 @@ test('.dockerignore: excludes build cruft, keeps src/ and public/ in context', (
 test('README.md: host runbook with exact compose + curl self-check commands', () => {
   const r = read('README.md');
   assert.match(r, /DOMAIN=\S+\s+docker compose up -d --build/, 'README must give the exact host deploy command');
-  assert.match(r, /curl[^\n]*127\.0\.0\.1:8080/, 'README must give a curl self-check against 127.0.0.1:8080');
+  assert.match(r, /curl[^\n]*127\.0\.0\.1:8404/, 'README must give a curl self-check against the default host port 127.0.0.1:8404');
+  assert.match(r, /HOST_PORT/, 'README must document the HOST_PORT override');
   assert.match(r, /http_code/, 'README curl self-check must print the HTTP status code (expect 200)');
   assert.match(r, /reverse[- ]proxy|TLS|HTTPS/i, 'README must note reverse-proxy/HTTPS is owner-managed');
 });

@@ -7,5 +7,5 @@ services:
       args:
         SITE: ${DOMAIN:-https://example.com}
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${HOST_PORT:-8404}:8080"
     restart: unless-stopped
