@@ -259,8 +259,9 @@ export const about = {
   // prose in components.
   skillsLabel: 'Skills',
   story: [
-    'I am Roy — a software engineer in Taipei working where systems observability meets LLM agents. I came up through the NCCU SE Lab, where our OpenTelemetry instrumentation research (with me as first author) was awarded Best Paper at TANET 2023, and I later hardened a commercial data-center platform with 100+ Cypress regression tests as a research assistant.',
-    'For my NTU CSIE master’s I built a stage-based LLM agentic workflow that turns natural-language questions into correct queries on a production DCIM system — validated on 308 annotated user queries. I now research monolith-to-microservices automation at the NTU SE Lab, and I self-host Hermes Agent, my own AI assistant on Kubernetes with local models, a Discord bot, and FastMCP tools.',
+    'I am Roy — a software engineer in Taipei working where systems observability meets LLM agents. I came up through the NCCU SE Lab, where our OpenTelemetry instrumentation research (with me as first author) was awarded Best Paper at TANET 2023, and I later hardened a commercial data-center platform with 100+ Cypress regression tests as a research assistant in 2025.',
+    'In my first year of NTU CSIE master’s study, I worked on monolith-to-microservices automation research (continuing a senior’s project); in my second year I built my own thesis — a stage-based LLM agentic workflow that turns natural-language questions into correct queries on a production DCIM system, validated on 308 annotated user queries. Outside the lab, I self-host Hermes Agent, my own AI assistant on Kubernetes with local models, a Discord bot, and FastMCP tools.',
+    'I finished my master’s in August 2026 and I’m now looking for a new-grad role where I can build, ship, and operate software end to end.',
   ],
   imageAlt:
     'From a hillside old town: a stone fortress above tiled rooftops, with a vast city on the horizon',
@@ -300,21 +301,21 @@ export const timeline: TimelineItem[] = [
   },
   {
     period: '2024-09 – 2026-08',
-    title: 'NTU CSIE MS — master\u2019s thesis on a stage-based LLM agentic workflow',
+    title: 'NTU CSIE MS',
     org: 'NTU SE Lab',
-    text: 'Thesis validated on a real DCIM system; independently owned dataset-to-workflow automation.',
+    text: 'Master\u2019s thesis in year two: a stage-based LLM agentic workflow validated on a real DCIM system, independently owning the full dataset-to-workflow pipeline.',
+  },
+  {
+    period: '2024-09 – 2025-06',
+    title: 'Research — monolith-to-microservices automation (MS year 1)',
+    org: 'NTU SE Lab',
+    text: 'First master\u2019s year: continued a senior\u2019s project — static analysis to extract service dependencies + DDD aggregate repacking, prototyped end to end.',
   },
   {
     period: '2025-01 – 2025-02',
     title: 'DCIM automated regression testing (Research Assistant)',
     org: 'NTU SE Lab',
     text: 'Delivered 100+ Cypress E2E tests from vendor specs; adopted as the lab\u2019s continuous validation standard.',
-  },
-  {
-    period: '2026-08 – present',
-    title: 'Research — monolith-to-microservices automation',
-    org: 'NTU SE Lab',
-    text: 'Static analysis to extract service dependencies + DDD aggregate repacking, prototyped end to end.',
   },
   {
     period: '2026 – present',
