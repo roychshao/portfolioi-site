@@ -252,6 +252,9 @@ export const skills = {
 // About-story prose: every claim here is a fact already carried by cases[] and
 // timeline[] — no accolades beyond what the rest of the site substantiates.
 export const about = {
+  // Accessible name for the skill-pills group (About.astro) — no hardcoded
+  // prose in components.
+  skillsLabel: 'Skills',
   story: [
     'I am Roy — a software engineer in Taipei working where systems observability meets LLM agents. I came up through the NCCU SE Lab, where our OpenTelemetry instrumentation research (with me as first author) was awarded Best Paper at TANET 2023, and I later hardened a commercial data-center platform with 100+ Cypress regression tests as a research assistant.',
     'For my NTU CSIE master’s I built a stage-based LLM agentic workflow that turns natural-language questions into correct queries on a production DCIM system — validated on 308 annotated user queries. I now research monolith-to-microservices automation at the NTU SE Lab, and I self-host Hermes Agent, my own AI assistant on Kubernetes with local models, a Discord bot, and FastMCP tools.',

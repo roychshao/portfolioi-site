@@ -14,7 +14,7 @@ const skillPills = [...skills.languages, ...skills.frameworks, ...skills.tools];
   <div class="about-grid">
     <div class="about-story">
       {about.story.map((p) => <p class="about-para reveal">{p}</p>)}
-      <div class="skill-pills reveal" aria-label="Skills">
+      <div class="skill-pills reveal" role="group" aria-label={about.skillsLabel}>
         {skillPills.map((s) => <span class="pill">{s}</span>)}
       </div>
     </div>

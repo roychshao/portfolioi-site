@@ -2,36 +2,46 @@
 // Contact + site footer, one component per the plan's file list:
 // section#contact (three big pill links from footer.contactLinks, hrefs derived
 // from the single `contact` source) then <footer> (© line, >_ brand, nav repeat).
+// The `part` prop lets index.astro keep section#contact inside <main> and the
+// <footer> element outside it: part="contact" emits only the section,
+// part="footer" only the footer (default: both).
 import { contact, footer, nav } from '../data/site';
 import Icon from './Icons.astro';
 
+const { part = 'both' } = Astro.props;
 const contactLabel = nav.links.find((l) => l.href === '#contact')?.label ?? '';
 const isExternal = (href: string) => href.startsWith('https://');
 ---
-<section id="contact" class="contact reveal">
-  <h2 class="section-title">{contactLabel}</h2>
-  <p class="contact-sub">{footer.sub}</p>
-  <div class="contact-pills">
-    {footer.contactLinks.map((l) => (
-      <a
-        class="pill contact-pill"
-        href={l.href}
-        {...isExternal(l.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {}}>
-        {l.icon ? <span class="contact-ic"><Icon name={l.icon} /></span> : null}
-        {l.label}
-      </a>
-    ))}
-  </div>
-</section>
-<footer class="site-footer">
-  <div class="footer-inner">
-    <a class="footer-brand" href="#top"><span class="footer-mark" aria-hidden="true">{footer.brand}</span></a>
-    <ul class="footer-links">
-      {nav.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
-    </ul>
-    <span class="footer-copy">{footer.copyright}</span>
-  </div>
-</footer>
+{part !== 'footer' && (
+  <section id="contact" class="contact reveal">
+    <h2 class="section-title">{contactLabel}</h2>
+    <p class="contact-sub">{footer.sub}</p>
+    <div class="contact-pills">
+      {footer.contactLinks.map((l) => (
+        <a
+          class="pill contact-pill"
+          href={l.href}
+          {...isExternal(l.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {}}>
+          {l.icon ? <span class="contact-ic"><Icon name={l.icon} /></span> : null}
+          {l.label}
+        </a>
+      ))}
+    </div>
+  </section>
+)}
+{part !== 'contact' && (
+  <footer class="site-footer">
+    <div class="footer-inner">
+      {/* aria-label from nav.brand gives the link a non-empty accessible name
+          (WCAG 4.1.2); the visible >_ mark stays exactly as styled. */}
+      <a class="footer-brand" href="#top" aria-label={nav.brand}><span class="footer-mark">{footer.brand}</span></a>
+      <ul class="footer-links">
+        {nav.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+      <span class="footer-copy">{footer.copyright}</span>
+    </div>
+  </footer>
+)}
 <style>
   .contact {
     max-width: 62rem;

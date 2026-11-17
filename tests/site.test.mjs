@@ -157,6 +157,8 @@ test('site.ts data invariants', async () => {
     'about.story paragraphs should be substantive prose');
   assert.ok(typeof site.about.imageAlt === 'string' && site.about.imageAlt.trim().length > 0,
     'about.imageAlt should be non-empty');
+  assert.ok(typeof site.about.skillsLabel === 'string' && site.about.skillsLabel.trim().length > 0,
+    'about.skillsLabel should be a non-empty string (accessible name for the skill-pills region)');
   assert.equal(site.honorsWriting.title, 'Honors & Writing');
   assert.equal(site.footer.brand, '>_');
   assert.equal(site.footer.copyright, `© 2026 ${site.profile.name.split(' (')[0]}`);
@@ -543,6 +545,16 @@ test('Task 6: about — story, bg image, skill pills, timeline', async () => {
       `skill "${s}" should sit in a .pill element`);
   }
 
+  // --- skills region: real accessible name from data (role + aria-label),
+  //     never hardcoded prose in the component (all-copy-from-site.ts rule)
+  const pillsTag = (chunk.match(/<div[^>]*class="[^"]*skill-pills[^"]*"[^>]*>/) ?? [])[0];
+  assert.ok(pillsTag, 'skill-pills container div should exist');
+  assert.match(pillsTag, /role="group"/, 'skill-pills region needs an explicit landmark role');
+  assert.ok(pillsTag.includes(`aria-label="${site.about.skillsLabel}"`),
+    'skill-pills aria-label should be the site.ts about.skillsLabel value');
+  assert.doesNotMatch(readFileSync(path.join(root, 'src/components/About.astro'), 'utf8'),
+    /aria-label\s*=\s*["']/, 'About.astro must not hardcode aria-label prose');
+
   // --- timeline: every entry, incl. Hermes Agent + NTU + NCCU markers
   for (const t of site.timeline) {
     assert.ok(chunk.includes(t.title) && chunk.includes(t.period) && chunk.includes(t.org),
@@ -558,6 +570,16 @@ test('Task 6: contact section + footer', async () => {
   const html = unesc(readFileSync(distIndex, 'utf8'));
 
   assert.match(html, /<section[^>]*id="contact"/, 'missing section#contact (nav anchor target)');
+  // --- structure ruling: section#contact lives INSIDE <main>; only the
+  //     <footer> element sits outside it, after </main> (document order).
+  const mainOpen = html.indexOf('<main');
+  const mainClose = html.indexOf('</main>');
+  const contactPos = html.search(/<section[^>]*id="contact"/);
+  const footerPos = html.lastIndexOf('<footer');
+  assert.ok(mainOpen > -1 && mainClose > mainOpen, 'expected a single <main>…</main> span');
+  assert.ok(contactPos > mainOpen && contactPos < mainClose,
+    'section#contact must be rendered inside <main>');
+  assert.ok(footerPos > mainClose, 'the <footer> element must come after </main>');
   const chunk = sectionChunk(html, 'contact');
   for (const l of site.footer.contactLinks) {
     assert.ok(chunk.includes(`href="${l.href}"`), `contact pill link missing: ${l.href}`);
@@ -569,6 +591,14 @@ test('Task 6: contact section + footer', async () => {
   assert.ok(foot.includes(site.footer.copyright), 'footer should render the © line from site.ts');
   assert.ok(foot.includes('© 2026'), 'footer should show © 2026');
   assert.ok(foot.includes(site.footer.brand), 'footer should repeat the >_ brand mark');
+  // --- brand link: non-empty accessible name from data (WCAG 4.1.2) — the
+  //     aria-hidden span alone computed an empty name. Note: the label value
+  //     contains a raw `>` (legal in quoted attrs), so match <a> tags with
+  //     quoted regions atomic, not [^>]*.
+  const brandTag = (foot.match(/<a(?:[^>"]|"[^"]*")*>/g) ?? []).find((t) => /class="[^"]*footer-brand/.test(t));
+  assert.ok(brandTag, 'footer brand link missing');
+  assert.ok(brandTag.includes(`aria-label="${site.nav.brand}"`),
+    'footer brand link needs a non-empty aria-label derived from nav.brand');
   for (const l of site.nav.links) {
     assert.ok(foot.includes(`href="${l.href}"`), `footer should repeat nav link ${l.href}`);
   }
