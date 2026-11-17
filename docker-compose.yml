@@ -1,0 +1,11 @@
+name: portfolio-site
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        SITE: ${DOMAIN:-https://example.com}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
