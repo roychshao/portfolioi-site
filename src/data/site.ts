@@ -117,7 +117,7 @@ export const cases: Case[] = [
     ],
     body: {
       challenge:
-        'Operators of a commercial DCIM (data-center infrastructure management) system can only get answers by navigating dense query UIs. Could natural language reliably drive a real management system? I built and validated a stage-based LLM agentic workflow that translates user queries into correct system behavior, independently owning the full pipeline — from dataset construction to the automated workflow. Evaluation used ' + THESIS_N + ' real DCIM user queries with manually annotated use-case specs, served by Gemma-4-31B-it via vLLM (temperature 0.0).',
+        'Operators of a commercial DCIM (data-center infrastructure management) system can only get answers by navigating dense query UIs. Could natural language reliably drive a real management system? I built and validated a stage-based LLM agentic workflow that translates user queries into correct system behavior, independently owning the full pipeline — from dataset construction to the automated workflow. Evaluation used ' + THESIS_N + ' real DCIM user queries with manually annotated use-case specs, served by Gemma-4-31B-it via vLLM on an NVIDIA DGX Spark (temperature 0.0).',
       approach: [
         {
           title: 'Initial',
