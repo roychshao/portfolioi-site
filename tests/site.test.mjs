@@ -150,6 +150,20 @@ test('site.ts data invariants', async () => {
     'chatApp',
   ].sort());
 
+  // --- Task 6 copy homes: about story, honors-writing title, footer strings
+  assert.ok(Array.isArray(site.about.story) && site.about.story.length >= 1,
+    'about.story should be a non-empty array of paragraphs');
+  assert.ok(site.about.story.every((p) => typeof p === 'string' && p.trim().length > 40),
+    'about.story paragraphs should be substantive prose');
+  assert.ok(typeof site.about.imageAlt === 'string' && site.about.imageAlt.trim().length > 0,
+    'about.imageAlt should be non-empty');
+  assert.equal(site.honorsWriting.title, 'Honors & Writing');
+  assert.equal(site.footer.brand, '>_');
+  assert.equal(site.footer.copyright, `© 2026 ${site.profile.name.split(' (')[0]}`);
+  assert.deepEqual(site.footer.contactLinks.map((l) => l.href),
+    [site.contact.email, site.contact.github, site.contact.medium],
+    'footer contact links must derive from the single contact source');
+
   // --- timeline: the 6 rulings from the controller note
   assert.equal(site.timeline.length, 6);
   const tl = JSON.stringify(site.timeline);
@@ -281,7 +295,7 @@ test('Task 5: work section — 3 case accordions with panels, metrics, images, l
   // --- markup contract: exactly 3 articles, ids in data order
   const ids = [...html.matchAll(/<article[^>]*data-case-id="([^"]+)"/g)].map((m) => m[1]);
   assert.deepEqual(ids, ['thesis', 'sunbird', 'dcim'], 'expected 3 article[data-case-id] in order');
-  assert.equal((html.match(/<article[^>]*class="[^"]*\breveal\b/g) ?? []).length, 3,
+  assert.equal((html.match(/<article\b(?=[^>]*data-case-id)(?=[^>]*class="[^"]*\breveal\b)[^>]*>/g) ?? []).length, 3,
     'each case article should carry .reveal');
 
   const chunks = articleChunks(html);
@@ -463,3 +477,123 @@ test('Task 4: hero renders from data with eager optimized portrait (LCP)', async
 });
 
 
+// --- Task 6 helper: isolate one top-level <section id="..."> block
+function sectionChunk(html, id) {
+  const m = new RegExp(`<section[^>]*id="${id}"`).exec(html);
+  assert.ok(m, `section#${id} missing from dist/index.html`);
+  const end = html.indexOf('</section>', m.index);
+  assert.ok(end > -1, `section#${id} unclosed`);
+  return html.slice(m.index, end);
+}
+
+test('Task 6: honors & writing — TANET banner + exactly 2 Medium article links', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+  const html = unesc(readFileSync(distIndex, 'utf8'));
+
+  assert.match(html, /<section[^>]*id="honors-writing"/, 'missing section#honors-writing');
+  assert.match(html, /<section[^>]*id="honors-writing"[^>]*class="[^"]*\breveal\b/,
+    'section#honors-writing should carry .reveal');
+  const chunk = sectionChunk(html, 'honors-writing');
+  assert.ok(chunk.includes(site.honorsWriting.title), 'honors-writing title should render from site.ts');
+
+  // --- TANET banner: title + Best Paper + the pinned repo link
+  for (const h of site.honors) {
+    assert.ok(chunk.includes(h.title) && chunk.includes('Best Paper'), `honor "${h.title}" should render`);
+    assert.ok(chunk.includes(`href="${h.url}"`), `honor repo link ${h.url} should render`);
+    assert.ok(chunk.includes(h.detail), 'honor detail should render');
+  }
+
+  // --- exactly the 2 writing articles, each linked once, title+date rendered
+  for (const w of site.writing) {
+    assert.ok(chunk.includes(`href="${w.url}"`), `writing link missing: ${w.url}`);
+    assert.equal(html.split(w.url).length - 1, 1, `writing URL should appear exactly once: ${w.url}`);
+    assert.ok(chunk.includes(w.title) && chunk.includes(w.date), `writing card "${w.title}" incomplete`);
+  }
+  const mediumLinks = [...html.matchAll(/href="(https:\/\/medium\.com[^"]*)"/g)].map((m) => m[1]);
+  assert.deepEqual(mediumLinks.sort(),
+    [...site.writing.map((w) => w.url), site.contact.medium].sort(),
+    'medium.com links should be exactly the 2 articles + the profile pill');
+});
+
+test('Task 6: about — story, bg image, skill pills, timeline', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  const html = unesc(readFileSync(distIndex, 'utf8'));
+
+  assert.match(html, /<section[^>]*id="about"[^>]*class="[^"]*\breveal\b/,
+    'section#about should exist and carry .reveal');
+  const chunk = sectionChunk(html, 'about');
+
+  for (const p of site.about.story) {
+    assert.ok(chunk.includes(p), 'about story paragraph should render from site.ts');
+  }
+
+  // --- about-bg.jpg: exactly one, astro:assets-optimized, dimensioned, lazy
+  const imgs = (chunk.match(/<img\b[^>]*>/g) ?? []).filter((t) => /about-bg/.test(t));
+  assert.equal(imgs.length, 1, 'expected exactly one about-bg <img> in About');
+  assert.match(imgs[0], /\bwidth="\d+"/, 'about-bg img needs width');
+  assert.match(imgs[0], /\bheight="\d+"/, 'about-bg img needs height');
+  assert.match(imgs[0], /loading="lazy"/, 'about-bg img must be lazy (below fold)');
+  assert.ok(imgs[0].includes(`alt="${site.about.imageAlt}"`), 'about-bg alt text should come from site.ts');
+
+  // --- skill pills from all three skills groups
+  for (const s of [...site.skills.languages, ...site.skills.frameworks, ...site.skills.tools]) {
+    assert.ok(chunk.includes(s), `skill pill "${s}" should render`);
+    assert.match(chunk, new RegExp(`class="[^"]*\\bpill\\b[^"]*"[^>]*>${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
+      `skill "${s}" should sit in a .pill element`);
+  }
+
+  // --- timeline: every entry, incl. Hermes Agent + NTU + NCCU markers
+  for (const t of site.timeline) {
+    assert.ok(chunk.includes(t.title) && chunk.includes(t.period) && chunk.includes(t.org),
+      `timeline entry "${t.title}" should render with period and org`);
+  }
+  assert.ok(chunk.includes('Hermes Agent'), 'timeline should include the Hermes Agent entry');
+  assert.ok(chunk.includes('NTU CSIE MS'), 'timeline should include NTU CSIE MS');
+  assert.ok(chunk.includes('NCCU'), 'timeline should include NCCU');
+});
+
+test('Task 6: contact section + footer', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  const html = unesc(readFileSync(distIndex, 'utf8'));
+
+  assert.match(html, /<section[^>]*id="contact"/, 'missing section#contact (nav anchor target)');
+  const chunk = sectionChunk(html, 'contact');
+  for (const l of site.footer.contactLinks) {
+    assert.ok(chunk.includes(`href="${l.href}"`), `contact pill link missing: ${l.href}`);
+    assert.ok(chunk.includes(l.label), `contact pill label missing: ${l.label}`);
+  }
+  assert.ok(chunk.includes(`href="mailto:${site.profile.email}"`), 'contact must expose the derived mailto');
+
+  const foot = html.slice(html.lastIndexOf('<footer'));
+  assert.ok(foot.includes(site.footer.copyright), 'footer should render the © line from site.ts');
+  assert.ok(foot.includes('© 2026'), 'footer should show © 2026');
+  assert.ok(foot.includes(site.footer.brand), 'footer should repeat the >_ brand mark');
+  for (const l of site.nav.links) {
+    assert.ok(foot.includes(`href="${l.href}"`), `footer should repeat nav link ${l.href}`);
+  }
+});
+
+test('Task 6: banned strings swept from every dist text file', () => {
+  // Global Constraints privacy sweep: phone fragments, LinkedIn, resume, blog
+  // must not appear anywhere human-readable in the build output.
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+  const banned = ['+886', '908', 'linkedin', 'resume', 'blog'];
+  const textExt = new Set(['.html', '.css', '.js', '.map', '.svg', '.txt', '.json']);
+  const files = [];
+  (function walk(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (textExt.has(path.extname(e.name).toLowerCase())) files.push(p);
+    }
+  })(path.join(root, 'dist'));
+  assert.ok(files.includes(distIndex) && files.length >= 2,
+    'sanity: the sweep must actually cover dist/index.html plus emitted assets');
+  for (const f of files) {
+    const hay = readFileSync(f, 'utf8').toLowerCase();
+    for (const b of banned) {
+      assert.ok(!hay.includes(b), `${path.relative(root, f)} contains banned string "${b}"`);
+    }
+  }
+});

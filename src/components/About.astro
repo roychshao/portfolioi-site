@@ -1,0 +1,99 @@
+---
+// About: two columns — left story paragraphs + skill pills, right the hillside
+// photo as a rounded block image + the timeline list. Story/alt copy lives in
+// site.ts (`about`); the heading label is reused from nav (single source).
+import { about, nav, skills, timeline } from '../data/site';
+import { Image } from 'astro:assets';
+import aboutBg from '../assets/img/about-bg.jpg';
+
+const aboutLabel = nav.links.find((l) => l.href === '#about')?.label ?? '';
+const skillPills = [...skills.languages, ...skills.frameworks, ...skills.tools];
+---
+<section id="about" class="about reveal">
+  <h2 class="section-title">{aboutLabel}</h2>
+  <div class="about-grid">
+    <div class="about-story">
+      {about.story.map((p) => <p class="about-para reveal">{p}</p>)}
+      <div class="skill-pills reveal" aria-label="Skills">
+        {skillPills.map((s) => <span class="pill">{s}</span>)}
+      </div>
+    </div>
+    <div class="about-side">
+      <div class="about-figure reveal">
+        <Image src={aboutBg} width={640} alt={about.imageAlt} loading="lazy" />
+      </div>
+      <ol class="timeline">
+        {timeline.map((t) => (
+          <li class="timeline-item reveal">
+            <span class="timeline-period">{t.period}</span>
+            <h3 class="timeline-title">{t.title}</h3>
+            <span class="timeline-org">{t.org}</span>
+            <p class="timeline-text">{t.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </div>
+</section>
+<style>
+  .about {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: var(--space-section) clamp(1rem, 4vw, 2rem);
+  }
+
+  .about-grid {
+    display: grid;
+    gap: clamp(2rem, 5vw, 3.5rem);
+    margin-top: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .about-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
+  }
+
+  .about-story { display: grid; align-content: start; gap: 0.25rem; }
+  .about-para { color: var(--c-ink); line-height: 1.7; max-width: 36rem; }
+
+  .skill-pills { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.9rem; }
+  .skill-pills .pill { font-size: 0.78rem; color: var(--c-muted); }
+
+  .about-figure {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--c-line);
+    box-shadow: var(--shadow-card);
+  }
+  .about-figure img { width: 100%; height: auto; }
+
+  .timeline {
+    list-style: none;
+    margin: 1.75rem 0 0;
+    padding: 0 0 0 1.1rem;
+    border-left: 2px solid var(--c-line);
+    display: grid;
+    gap: 1.35rem;
+  }
+
+  .timeline-item { position: relative; }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: calc(-1.1rem - 5px);
+    top: 0.42em;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-primary);
+  }
+
+  .timeline-period {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--c-muted);
+    margin-bottom: 0.15rem;
+  }
+  .timeline-title { font-size: 0.95rem; margin: 0 0 0.1rem; }
+  .timeline-org { display: block; font-size: 0.82rem; font-weight: 600; color: var(--c-primary); }
+  .timeline-text { margin: 0.3rem 0 0; font-size: 0.85rem; color: var(--c-muted); line-height: 1.55; }
+</style>

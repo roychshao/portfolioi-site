@@ -1,0 +1,79 @@
+---
+// Contact + site footer, one component per the plan's file list:
+// section#contact (three big pill links from footer.contactLinks, hrefs derived
+// from the single `contact` source) then <footer> (© line, >_ brand, nav repeat).
+import { contact, footer, nav } from '../data/site';
+import Icon from './Icons.astro';
+
+const contactLabel = nav.links.find((l) => l.href === '#contact')?.label ?? '';
+const isExternal = (href: string) => href.startsWith('https://');
+---
+<section id="contact" class="contact reveal">
+  <h2 class="section-title">{contactLabel}</h2>
+  <p class="contact-sub">{footer.sub}</p>
+  <div class="contact-pills">
+    {footer.contactLinks.map((l) => (
+      <a
+        class="pill contact-pill"
+        href={l.href}
+        {...isExternal(l.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {}}>
+        {l.icon ? <span class="contact-ic"><Icon name={l.icon} /></span> : null}
+        {l.label}
+      </a>
+    ))}
+  </div>
+</section>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <a class="footer-brand" href="#top"><span class="footer-mark" aria-hidden="true">{footer.brand}</span></a>
+    <ul class="footer-links">
+      {nav.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+    </ul>
+    <span class="footer-copy">{footer.copyright}</span>
+  </div>
+</footer>
+<style>
+  .contact {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: var(--space-section) clamp(1rem, 4vw, 2rem) clamp(2.5rem, 6vw, 4rem);
+    scroll-margin-top: 5.5rem;
+  }
+
+  .contact-sub { color: var(--c-muted); margin-bottom: 1.5rem; }
+
+  .contact-pills { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+
+  .contact-pill {
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.6em 1.3em;
+    color: var(--c-ink);
+    box-shadow: var(--shadow-card);
+  }
+  .contact-pill:hover { border-color: var(--c-primary); color: var(--c-primary); text-decoration: none; }
+  .contact-ic { display: inline-flex; color: var(--c-primary); }
+
+  .site-footer { border-top: 1px solid var(--c-line); background: var(--c-card); }
+
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.9rem;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 1.4rem clamp(1rem, 4vw, 2rem);
+  }
+
+  .footer-brand { color: var(--c-ink); }
+  .footer-brand:hover { text-decoration: none; color: var(--c-primary); }
+  .footer-mark { font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; }
+
+  .footer-links { display: flex; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+  .footer-links a { color: var(--c-muted); font-size: 0.88rem; }
+  .footer-links a:hover { color: var(--c-primary); }
+
+  .footer-copy { font-family: var(--font-mono); font-size: 0.78rem; color: var(--c-muted); }
+</style>

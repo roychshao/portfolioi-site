@@ -226,6 +226,10 @@ export const honors: HonorItem[] = [
   },
 ];
 
+export const honorsWriting = {
+  title: 'Honors & Writing',
+};
+
 export const writing: WritingItem[] = [
   {
     title: 'Building an AI Team to Develop Software for You — Multi-Agent SDLC with Hermes Agent Profiles & Kanban (Part 1)',
@@ -245,10 +249,32 @@ export const skills = {
   tools: ['Kubernetes', 'Docker', 'Jenkins', 'Git', 'Cypress', 'MySQL', 'Qdrant'],
 };
 
+// About-story prose: every claim here is a fact already carried by cases[] and
+// timeline[] — no accolades beyond what the rest of the site substantiates.
+export const about = {
+  story: [
+    'I am Roy — a software engineer in Taipei working where systems observability meets LLM agents. I came up through the NCCU SE Lab, where our OpenTelemetry instrumentation research (with me as first author) was awarded Best Paper at TANET 2023, and I later hardened a commercial data-center platform with 100+ Cypress regression tests as a research assistant.',
+    'For my NTU CSIE master’s I built a stage-based LLM agentic workflow that turns natural-language questions into correct queries on a production DCIM system — validated on 308 annotated user queries. I now research monolith-to-microservices automation at the NTU SE Lab, and I self-host Hermes Agent, my own AI assistant on Kubernetes with local models, a Discord bot, and FastMCP tools.',
+  ],
+  imageAlt:
+    'From a hillside old town: a stone fortress above tiled rooftops, with a vast city on the horizon',
+};
+
 export const contact = {
   email: `mailto:${EMAIL}`,
   github: GITHUB_URL,
   medium: 'https://medium.com/@roych.shao',
+};
+
+export const footer = {
+  brand: '>_',
+  copyright: `© 2026 ${profile.name.split(' (')[0]}`,
+  sub: 'Email is the fastest way to reach me.',
+  contactLinks: [
+    { label: 'Email', href: contact.email, icon: 'mail' },
+    { label: 'GitHub', href: contact.github, icon: 'github' },
+    { label: 'Medium', href: contact.medium },
+  ] satisfies { label: string; href: string; icon?: 'mail' | 'github' }[],
 };
 
 export const timeline: TimelineItem[] = [
