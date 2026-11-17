@@ -1,13 +1,16 @@
 ---
-// Home page — Nav + Hero live here (Task 4); later sections compose in Tasks 5-7.
+// Home page — Nav + Hero (Task 4) and the Work accordion (Task 5); later
+// sections compose in Tasks 6-7.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
+import CaseList from '../components/CaseList.astro';
 import { profile } from '../data/site';
 ---
 <BaseLayout title={`${profile.name} — ${profile.role}`}>
   <Nav />
   <main id="main">
     <Hero />
+    <CaseList />
   </main>
 </BaseLayout>

@@ -225,6 +225,174 @@ test('Task 4: sticky nav renders anchors, wordmark, icons, and mobile toggle', a
   assert.ok(jsTotal < 30 * 1024, `page JS (files + inline) is ${(jsTotal / 1024).toFixed(1)} KB — budget is 30 KB`);
 });
 
+// --- Task 5 helpers: isolate one case's <article> region in the emitted HTML
+function articleChunks(html) {
+  const ids = ['thesis', 'sunbird', 'dcim'];
+  const starts = ids.map((id) => html.indexOf(`data-case-id="${id}"`));
+  starts.forEach((i, k) => assert.ok(i > -1, `article[data-case-id="${ids[k]}"] missing`));
+  const workEnd = html.indexOf('</section>', starts[2]);
+  const ends = [starts[1], starts[2], workEnd];
+  const out = {};
+  ids.forEach((id, k) => { out[id] = html.slice(starts[k], ends[k]); });
+  return out;
+}
+// split an article chunk into its toggle-button part and its panel part
+function panelOf(chunk) {
+  const i = chunk.indexOf('data-case-panel');
+  assert.ok(i > -1, 'article should contain a [data-case-panel]');
+  return chunk.slice(i);
+}
+const unesc = (s) => s
+  .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+
+test('Task 5: work section — 3 case accordions with panels, metrics, images, links', async () => {
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+  const html = unesc(readFileSync(distIndex, 'utf8'));
+
+  // --- section#work with heading and reveal class
+  assert.match(html, /<section[^>]*id="work"/, 'missing section#work');
+  assert.match(html, /<section[^>]*id="work"[^>]*class="[^"]*\breveal\b/, 'section#work should carry .reveal');
+
+  // --- markup contract: exactly 3 articles, ids in data order
+  const ids = [...html.matchAll(/<article[^>]*data-case-id="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(ids, ['thesis', 'sunbird', 'dcim'], 'expected 3 article[data-case-id] in order');
+  assert.equal((html.match(/<article[^>]*class="[^"]*\breveal\b/g) ?? []).length, 3,
+    'each case article should carry .reveal');
+
+  const chunks = articleChunks(html);
+  for (const c of site.cases) {
+    const chunk = chunks[c.id];
+
+    // --- header > button[data-case-toggle] + div[data-case-panel]
+    assert.match(chunk, /<header[^>]*>[\s\S]*?<button[^>]*data-case-toggle[^>]*aria-expanded="false"[^>]*aria-controls="case-panel-/i,
+      `${c.id}: header should hold the toggle button (collapsed by default)`);
+    assert.match(chunk, /<\/button>\s*<div[^>]*data-case-panel[^>]*role="region"[^>]*aria-labelledby="case-toggle-/i,
+      `${c.id}: panel div[data-case-panel] must follow the button in header, role=region`);
+    assert.match(panelOf(chunk).slice(0, 300), /\bhidden\b/, `${c.id}: panel must render hidden server-side`);
+
+    // --- card summary: title, tagline, badges, techTags all from data
+    assert.ok(chunk.includes(c.title), `${c.id}: title should render`);
+    assert.ok(chunk.includes(c.tagline), `${c.id}: tagline should render`);
+    for (const b of [...c.badges, ...c.techTags]) {
+      assert.ok(chunk.includes(b), `${c.id}: badge/techTag "${b}" should render`);
+    }
+
+    // --- panel: challenge, approach steps, every results metric + label
+    const panel = panelOf(chunk);
+    assert.ok(panel.includes(c.body.challenge), `${c.id}: challenge should render in panel`);
+    for (const s of c.body.approach) {
+      assert.ok(panel.includes(s.title) && panel.includes(s.text), `${c.id}: approach step "${s.title}" should render`);
+    }
+    for (const r of c.body.results) {
+      assert.ok(panel.includes(r.metric) && panel.includes(r.label), `${c.id}: result "${r.metric}" should render`);
+    }
+    for (const l of c.links) {
+      assert.ok(panel.includes(l.url) && panel.includes(l.label), `${c.id}: link "${l.label}" should render in panel`);
+    }
+
+    // --- images inside the panel (astro:assets processed, lazy, dimensioned)
+    const panelImgs = panel.match(/<img\b[^>]*>/g) ?? [];
+    for (const tag of panelImgs) {
+      assert.match(tag, /\bwidth="\d+"/, `${c.id}: panel img needs width`);
+      assert.match(tag, /\bheight="\d+"/, `${c.id}: panel img needs height`);
+      assert.match(tag, /loading="lazy"/, `${c.id}: below-fold panel img must be lazy`);
+    }
+    if (c.id === 'thesis') {
+      assert.equal(panelImgs.length, 3, 'thesis panel should embed its 3 images');
+      assert.match(panel, /<img\b[^>]*similarity-dist/, 'thesis panel must contain the similarity-dist image');
+      assert.ok(panel.indexOf('similarity-dist') < panel.indexOf('02-pipeline') ||
+        panel.indexOf('similarity-dist') < panel.indexOf('dcim-architecture'),
+        'similarity-dist should lead the thesis panel (prominent)');
+    }
+    if (c.id === 'sunbird') {
+      assert.equal(panelImgs.length, 3, 'sunbird panel should embed its 3 images');
+      for (const f of ['arch-traces', 'collector-pipeline', 'fluentd-routing']) {
+        assert.ok(panel.includes(f), `sunbird panel should contain ${f} image`);
+      }
+    }
+    if (c.id === 'dcim') {
+      // hidden-dcim-img ruling: dcim has no images at all
+      assert.ok(!/<img\b/.test(panel), 'dcim panel must contain zero <img>');
+      assert.ok(!panel.includes('img/'), 'dcim panel must reference no img/ asset');
+      assert.match(chunk, /case-stat/, 'dcim card should use a text/stat visual instead of a thumbnail');
+    }
+  }
+
+  // --- thumbnails: thesis/sunbird cards carry one before the panel; dcim carries none
+  for (const id of ['thesis', 'sunbird']) {
+    const buttonPart = chunks[id].slice(0, chunks[id].indexOf('data-case-panel'));
+    assert.equal((buttonPart.match(/<img\b/g) ?? []).length, 1, `${id} card should show one thumbnail`);
+    assert.doesNotMatch(buttonPart, /loading="eager"|fetchpriority="high"/, `${id} thumbnail must be lazy`);
+  }
+});
+
+test('Task 5: main.ts — js class, deep links, reveal and nav sync compiled into dist', () => {
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+  const html = readFileSync(distIndex, 'utf8');
+
+  // --- no-flash: html.js is added by an inline snippet inside <head>
+  const head = html.slice(0, html.indexOf('</head>'));
+  assert.match(head, /classList\.add\((["'])js\1\)/, 'head should add the js class before paint');
+
+  // --- fail-open without JS: panels (and mobile taglines) render regardless of hidden attr
+  const cssFiles = [];
+  (function walkCss(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walkCss(p);
+      else if (e.name.endsWith('.css')) cssFiles.push(p);
+    }
+  })(path.join(root, 'dist'));
+  const css = cssFiles.map((f) => readFileSync(f, 'utf8')).join('\n')
+    + '\n' + (html.match(/<style[^>]*>[\s\S]*?<\/style>/g) ?? []).join('\n');
+  assert.match(css, /:not\(\.js\)[^,{]*\.case-panel(\[[^\]]+\])*\[hidden\][^{]*\{[^}]*display:\s*(block|flex)/,
+    'without html.js, hidden case panels must still render (plan: JS-disabled shows all text/images)');
+
+  // --- deep-link anchors resolve to elements even without JS
+  for (const id of ['thesis', 'sunbird', 'dcim']) {
+    assert.match(html, new RegExp(`id="case-${id}"`), `#case-${id} anchor target should exist`);
+  }
+
+  // --- compiled behavior: emitted .js bundles plus inline module scripts
+  // (Astro inlines small module scripts directly into the HTML)
+  const jsFiles = [];
+  (function walk(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.js')) jsFiles.push(p);
+    }
+  })(path.join(root, 'dist'));
+  const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  const js = jsFiles.map((f) => readFileSync(f, 'utf8')).join('\n') + '\n' + inlineScripts.join('\n');
+  assert.match(js, /data-case-toggle/, 'accordion wiring missing from bundle');
+  assert.match(js, /data-case-panel/, 'panel wiring missing from bundle');
+  assert.match(js, /aria-expanded/, 'toggle should keep aria-expanded');
+  assert.match(js, /hashchange/, 'deep links should listen for hashchange');
+  assert.match(js, /#case-/, 'deep links should parse #case-<id>');
+  assert.match(js, /IntersectionObserver/, 'scroll reveal should use IntersectionObserver');
+  assert.match(js, /unobserve/, 'revealed elements should be unobserved');
+  assert.match(js, /is-visible/, 'reveal should add is-visible');
+  // Task 4 deferred a11y minors: focus-within aria-expanded sync + Escape-to-close
+  assert.match(js, /focusin|focusout/, 'nav should sync aria-expanded on focus moves');
+  assert.match(js, /Escape/, 'nav menu should close on Escape');
+
+  // --- main.ts compiled size stays small (page-wide budget covered above)
+  let mainBundleBytes = 0;
+  for (const f of jsFiles) {
+    if (readFileSync(f, 'utf8').includes('data-case-toggle')) mainBundleBytes = statSync(f).size;
+  }
+  if (!mainBundleBytes) {
+    const inline = inlineScripts.find((s) => s.includes('data-case-toggle'));
+    assert.ok(inline, 'the accordion bundle should be emitted (file or inlined module)');
+    mainBundleBytes = Buffer.byteLength(inline);
+  }
+  assert.ok(mainBundleBytes < 30 * 1024,
+    `main.ts compiled is ${(mainBundleBytes / 1024).toFixed(1)} KB — budget is 30 KB`);
+});
+
 test('Task 4: hero renders from data with eager optimized portrait (LCP)', async () => {
   const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
   const html = readFileSync(distIndex, 'utf8');

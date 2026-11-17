@@ -1,0 +1,163 @@
+---
+// Work section — three case accordions, collapsed by default (fail-open: the
+// panel's hidden state is plain `hidden`, the reveal state lives under html.js).
+// Markup contract: section#work > article[data-case-id] > header >
+// button[data-case-toggle] + div[data-case-panel]. All copy from site.ts;
+// thesis/sunbird cards get a thumbnail, dcim a text/stat visual (no images).
+import { cases, nav } from '../data/site';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import CaseDetail from './CaseDetail.astro';
+
+import thesisArch from '../assets/img/thesis/01-dcim-architecture.png';
+import thesisPipeline from '../assets/img/thesis/02-pipeline-pattern.png';
+import thesisSimilarity from '../assets/img/thesis/03-similarity-dist.png';
+import sunbirdTraces from '../assets/img/sunbird/01-arch-traces.png';
+import sunbirdCollector from '../assets/img/sunbird/02-collector-pipeline.png';
+import sunbirdRouting from '../assets/img/sunbird/03-fluentd-routing.png';
+
+interface Fig { src: ImageMetadata; alt: string; width: number }
+// Display order per case — the headline similarity chart leads the thesis panel.
+// dcim has no figures by design (Global Constraints: no images for that case).
+const figures: Record<string, Fig[]> = {
+  thesis: [
+    { src: thesisSimilarity, alt: 'Regenerated spec similarity distribution over 308 real DCIM queries (mean 0.954, median 0.966)', width: 960 },
+    { src: thesisArch, alt: 'The commercial DCIM system architecture the agentic workflow targets', width: 760 },
+    { src: thesisPipeline, alt: 'Stage-based agentic workflow pipeline: initial, controller, computation, reply', width: 760 },
+  ],
+  sunbird: [
+    { src: sunbirdTraces, alt: 'Live trace stream from the Sunbird WebSocket dashboard', width: 760 },
+    { src: sunbirdCollector, alt: 'Push and pull OpenTelemetry collector topologies on Kubernetes', width: 760 },
+    { src: sunbirdRouting, alt: 'Fluentd routing configuration between collector modes', width: 760 },
+  ],
+  dcim: [],
+};
+
+const workLabel = nav.links.find((l) => l.href === '#work')?.label ?? '';
+---
+<section id="work" class="work reveal">
+  <h2 class="section-title">{workLabel}</h2>
+  <div class="case-stack">
+    {cases.map((c) => {
+      const figs = figures[c.id] ?? [];
+      const thumb = figs[0];
+      const stat = c.body.results[0]?.metric ?? '';
+      return (
+        <article class="case card reveal" data-case-id={c.id} id={`case-${c.id}`} aria-labelledby={`case-title-${c.id}`}>
+          <header class="case-head">
+            <button
+              type="button"
+              class="case-toggle"
+              id={`case-toggle-${c.id}`}
+              data-case-toggle
+              aria-expanded="false"
+              aria-controls={`case-panel-${c.id}`}>
+              {thumb
+                ? <Image class="case-thumb" src={thumb.src} width={220} alt="" loading="lazy" />
+                : <span class="case-stat" aria-hidden="true">{stat}</span>}
+              <span class="case-summary">
+                <span class="case-title" id={`case-title-${c.id}`}>{c.title}</span>
+                <span class="case-tagline">{c.tagline}</span>
+                <span class="case-chips">
+                  {c.badges.map((b) => <span class="pill chip chip-badge">{b}</span>)}
+                  {c.techTags.map((t) => <span class="pill chip chip-tag">{t}</span>)}
+                </span>
+              </span>
+              <span class="case-sign" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="case-panel"
+              data-case-panel
+              id={`case-panel-${c.id}`}
+              role="region"
+              aria-labelledby={`case-toggle-${c.id}`}
+              hidden>
+              <CaseDetail caseItem={c} figures={figs} />
+            </div>
+          </header>
+        </article>
+      );
+    })}
+  </div>
+</section>
+<script src="../scripts/main.ts"></script>
+<style>
+  .work {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: var(--space-section) clamp(1rem, 4vw, 2rem);
+  }
+
+  .case-stack { display: grid; gap: 1rem; margin-top: 1.5rem; }
+
+  .case { scroll-margin-top: 5.5rem; overflow: hidden; }
+
+  .case-toggle {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1.1rem;
+    width: 100%;
+    padding: 1.15rem clamp(1rem, 3vw, 1.4rem);
+    background: none;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .case-toggle:hover { background: var(--c-bg); }
+
+  .case-thumb {
+    width: 112px;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid var(--c-line);
+  }
+
+  .case-stat {
+    display: grid;
+    place-items: center;
+    width: 112px;
+    min-height: 74px;
+    border-radius: 10px;
+    background: var(--c-bg);
+    border: 1px solid var(--c-line);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--c-primary);
+  }
+
+  .case-summary { display: grid; gap: 0.15rem; min-width: 0; }
+  .case-title { font-size: 1.08rem; font-weight: 700; letter-spacing: -0.01em; }
+  .case-tagline { font-size: 0.9rem; color: var(--c-muted); line-height: 1.55; }
+
+  .case-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
+  .chip { font-size: 0.72rem; padding: 0.22em 0.7em; }
+  .chip-badge { border-color: var(--c-primary); color: var(--c-primary); font-family: var(--font-mono); }
+  .chip-tag { color: var(--c-muted); }
+
+  .case-sign {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--c-muted);
+    transition: transform 0.25s ease;
+  }
+  .case-toggle[aria-expanded='true'] .case-sign { transform: rotate(45deg); }
+
+  .case-panel { border-top: 1px solid var(--c-line); padding: 1.35rem clamp(1rem, 3vw, 1.4rem) 1.6rem; }
+  /* Fail-open (plan review focus): without html.js nobody can expand a panel,
+     so the hidden attribute must not hide content — render all panels flat. */
+  html:not(.js) .case-panel[hidden] { display: block; }
+
+  @media (max-width: 767px) {
+    .case-toggle { grid-template-columns: minmax(0, 1fr) auto; }
+    .case-thumb, .case-stat { display: none; }
+    .case-tagline { display: none; }
+    .case-toggle[aria-expanded='true'] .case-tagline { display: block; }
+    /* no-JS: no expander exists, so keep the tagline readable */
+    html:not(.js) .case-tagline { display: block; }
+  }
+</style>

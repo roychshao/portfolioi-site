@@ -34,6 +34,10 @@ const favicon =
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- No-flash js flag (Task 5 owns html.js): set before first paint so the
+         .js-gated hidden states apply atomically; content stays fail-open if JS
+         never runs. main.ts re-adds the class as a belt-and-braces fallback. -->
+    <script is:inline>document.documentElement.classList.add('js');</script>
     <title>{title}</title>
     <meta name="description" content={desc} />
     <link rel="canonical" href={canonicalURL} />
