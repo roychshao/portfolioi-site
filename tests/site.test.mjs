@@ -125,7 +125,7 @@ test('site.ts data invariants', async () => {
     assert.ok(thesisText.includes(m), `thesis results should contain "${m}"`);
   }
   // thesis links: DOI only (source code is not public — never imply a repo)
-  assert.deepEqual(site.research[0].links, [{ label: 'Paper (DOI)', url: 'https://doi.org/10.6342/NTU202603218' }]);
+  assert.deepEqual(site.research[0].links, []); // thesis TDR DOI withdrawn from public repo (2026-11) — no dead links
   // --- wu-microservices: base thesis is the senior's; Roy's role credited precisely
   {
     const wu = JSON.stringify(site.research[1]);
@@ -558,7 +558,7 @@ test('Research section — 3 accordion items: own thesis, senior-thesis continua
   assert.deepEqual(rids, ['thesis', 'wu-microservices', 'tanet'], 'research holds 3 accordions in order');
 
   // own thesis moved over intact: Chapter-4 numbers + DOI link
-  assert.ok(chunk.includes('https://doi.org/10.6342/NTU202603218'), 'thesis DOI link should render in research');
+  assert.ok(!chunk.includes('https://doi.org/10.6342/NTU202603218'), 'withdrawn thesis DOI must not be linked');
   assert.ok(chunk.includes('mean 0.954') && chunk.includes('27/27'), 'thesis Chapter-4 metrics should render in research');
   // senior-thesis continuation: authored by Dong-Hong Wu, Roy's role explicit, verified DOI only
   assert.ok(chunk.includes('Dong-Hong Wu'), 'research should name the senior thesis author');

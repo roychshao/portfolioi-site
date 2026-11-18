@@ -182,7 +182,7 @@ export const research: Case[] = [
       "My master's thesis: a stage-based LLM agentic workflow — with a use-case spec as the middle representation — that answers real DCIM users' questions on a production data-center system.",
     badges: [`mean ${THESIS_MEAN} spec similarity · n=${THESIS_N}`, 'top-3 100% method matching', '27/27 final reply checks'],
     techTags: ['Python', 'LlamaIndex', 'vLLM', 'Qdrant', 'LLM Agents'],
-    links: [{ label: 'Paper (DOI)', url: 'https://doi.org/10.6342/NTU202603218' }],
+    links: [],
     // Display order: the headline similarity chart leads the panel.
     figures: [
       { key: 'similarity', alt: `Regenerated spec similarity distribution over ${THESIS_N} real DCIM queries (mean ${THESIS_MEAN}, median ${THESIS_MEDIAN})` },
