@@ -339,8 +339,6 @@ export const about = {
     'In my first year of NTU CSIE master’s study, I worked on monolith-to-microservices automation research (continuing a senior’s project); in my second year I built my own thesis — a stage-based LLM agentic workflow that turns natural-language questions into correct queries on a production DCIM system, validated on 308 annotated user queries. Outside the lab, I self-host Hermes Agent, my own AI assistant on Kubernetes with local models, a Discord bot, and FastMCP tools.',
     'I finished my master’s in August 2026 and I’m now looking for a new-grad role where I can build, ship, and operate software end to end.',
   ],
-  imageAlt:
-    'From a hillside old town: a stone fortress above tiled rooftops, with a vast city on the horizon',
 };
 
 export const contact = {

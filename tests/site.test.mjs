@@ -197,8 +197,6 @@ test('site.ts data invariants', async () => {
     'about.story should be a non-empty array of paragraphs');
   assert.ok(site.about.story.every((p) => typeof p === 'string' && p.trim().length > 40),
     'about.story paragraphs should be substantive prose');
-  assert.ok(typeof site.about.imageAlt === 'string' && site.about.imageAlt.trim().length > 0,
-    'about.imageAlt should be non-empty');
   assert.ok(typeof site.about.skillsLabel === 'string' && site.about.skillsLabel.trim().length > 0,
     'about.skillsLabel should be a non-empty string (accessible name for the skill-pills region)');
   assert.equal(site.writingSection.title, 'Writing');
@@ -622,13 +620,6 @@ test('Task 6: about — story, bg image, skill pills, timeline', async () => {
     assert.ok(chunk.includes(p), 'about story paragraph should render from site.ts');
   }
 
-  // --- about-bg.jpg: exactly one, astro:assets-optimized, dimensioned, lazy
-  const imgs = (chunk.match(/<img\b[^>]*>/g) ?? []).filter((t) => /about-bg/.test(t));
-  assert.equal(imgs.length, 1, 'expected exactly one about-bg <img> in About');
-  assert.match(imgs[0], /\bwidth="\d+"/, 'about-bg img needs width');
-  assert.match(imgs[0], /\bheight="\d+"/, 'about-bg img needs height');
-  assert.match(imgs[0], /loading="lazy"/, 'about-bg img must be lazy (below fold)');
-  assert.ok(imgs[0].includes(`alt="${site.about.imageAlt}"`), 'about-bg alt text should come from site.ts');
 
   // --- skill pills from all three skills groups
   for (const s of [...site.skills.languages, ...site.skills.frameworks, ...site.skills.tools]) {

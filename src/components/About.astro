@@ -4,7 +4,6 @@
 // site.ts (`about`); the heading label is reused from nav (single source).
 import { about, nav, skills, timeline } from '../data/site';
 import { Image } from 'astro:assets';
-import aboutBg from '../assets/img/about-bg.jpg';
 
 const aboutLabel = nav.links.find((l) => l.href === '#about')?.label ?? '';
 const skillPills = [...skills.languages, ...skills.frameworks, ...skills.tools];
@@ -19,9 +18,6 @@ const skillPills = [...skills.languages, ...skills.frameworks, ...skills.tools];
       </div>
     </div>
     <div class="about-side">
-      <div class="about-figure reveal">
-        <Image src={aboutBg} width={640} widths={[320, 640]} alt={about.imageAlt} loading="lazy" />
-      </div>
       <ol class="timeline">
         {timeline.map((t) => (
           <li class="timeline-item reveal">
