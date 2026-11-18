@@ -82,6 +82,15 @@ export const nav = {
   ] satisfies NavItem[],
 };
 
+// Résumé download — owner decision 2026-11-18 supersedes the earlier ban.
+// Single source: Hero.astro and Footer.astro render from here; components must
+// never hardcode the public/ filename.
+export const resume = {
+  label: 'Download Résumé (PDF, EN)',
+  href: '/Ching-Hsiang-Shao-Resume-2026-11.pdf',
+  updatedAt: 'November 2026',
+} as const;
+
 export const hero = {
   name: profile.name,
   status: 'NTU CSIE MS · Software Engineer',
@@ -93,6 +102,9 @@ export const hero = {
     { label: 'View Work', href: '#work' },
     { label: 'Get in touch', href: `mailto:${EMAIL}` },
   ],
+  // Third pill in the CTA row: résumé download (owner decision 2026-11-18).
+  // href comes from `resume` above — the public/ path lives in exactly one place.
+  resumeCta: { text: 'Résumé', href: resume.href },
 };
 
 export const cases: Case[] = [

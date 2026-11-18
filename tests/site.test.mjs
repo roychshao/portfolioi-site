@@ -227,8 +227,10 @@ test('site.ts data invariants', async () => {
   }
 
   // --- banned-content guard (Global Constraints): nothing forbidden may appear anywhere
+  // 'resume'/'résumé' dropped from the banned list: owner decision 2026-11-18
+  // adds a résumé download (site.resume is now legitimate site data).
   const banned = ['+886', '908 822 007', 'linkedin.com', 'dcTrack-regression', 'question_generation',
-    'resume', 'testimonial', 'OpenNCCU', 'privacyidea'];
+    'testimonial', 'OpenNCCU', 'privacyidea'];
   const dump = JSON.stringify({ ...site, profile: site.profile, cases: site.cases }).toLowerCase();
   for (const b of banned) {
     assert.ok(!dump.includes(b.toLowerCase()), `site data must never contain banned token "${b}"`);
@@ -695,10 +697,14 @@ test('Task 6: contact section + footer', async () => {
 });
 
 test('Task 6: banned strings swept from every dist text file', () => {
-  // Global Constraints privacy sweep: phone fragments, LinkedIn, resume, blog
+  // Global Constraints privacy sweep: phone fragments, LinkedIn and blog
   // must not appear anywhere human-readable in the build output.
+  // 'resume' removed from the list — owner decision 2026-11-18 ships a résumé
+  // download, so the filename/href in HTML is expected, not a leak.
+  // The textExt allow-list is the binary guard: rasters (.jpg/.png/.webp) and
+  // now the résumé PDF are skipped — they're excluded by never being added.
   assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
-  const banned = ['+886', '908', 'linkedin', 'resume', 'blog'];
+  const banned = ['+886', '908', 'linkedin', 'blog'];
   const textExt = new Set(['.html', '.css', '.js', '.map', '.svg', '.txt', '.json']);
   const files = [];
   (function walk(dir) {
@@ -741,4 +747,57 @@ test('30-second test: hero availability pill + copyable contact handles render i
   }
   assert.ok(site.footer.contactLinks.some((l) => l.label.includes('@') && l.label.includes('.')),
     'contact labels should include @ handle forms');
+});
+
+test('Résumé download: hero pill + contact button render from site.resume, PDF ships byte-identical', async () => {
+  // Owner decision 2026-11-18 supersedes the earlier "no resume download" ban.
+  const site = await import(new URL('../src/data/site.ts', import.meta.url).href);
+  assert.ok(existsSync(distIndex), 'run `npm run build` before `npm test`');
+
+  // --- single source: site.ts owns the résumé descriptor
+  assert.equal(site.resume.href, '/Ching-Hsiang-Shao-Resume-2026-11.pdf',
+    'resume.href must be the exact public/ path');
+  assert.ok(site.resume.label && site.resume.updatedAt, 'resume needs label + updatedAt');
+
+  // --- the PDF ships in dist, byte-identical to the public/ source
+  const srcPdf = path.join(root, 'public', 'Ching-Hsiang-Shao-Resume-2026-11.pdf');
+  const distPdf = path.join(root, 'dist', 'Ching-Hsiang-Shao-Resume-2026-11.pdf');
+  assert.ok(existsSync(srcPdf), 'public/ résumé PDF must exist');
+  assert.ok(existsSync(distPdf), 'Astro must copy the résumé PDF into dist/');
+  assert.equal(Buffer.compare(readFileSync(distPdf), readFileSync(srcPdf)), 0,
+    'dist résumé PDF must be byte-identical to public/');
+
+  const html = unesc(readFileSync(distIndex, 'utf8'));
+
+  // --- exactly two résumé anchors (hero + contact), both from resume.href,
+  //     both carrying the download attribute
+  const anchors = (html.match(/<a\b[^>]*>/g) ?? [])
+    .filter((t) => t.includes(`href="${site.resume.href}"`));
+  assert.equal(anchors.length, 2, 'résumé link should appear exactly in hero + contact');
+  for (const a of anchors) assert.match(a, /\bdownload(?:\s|=|>)/, `résumé anchor needs download attr: ${a}`);
+
+  // --- hero CTA row and the contact section each hold one
+  assert.ok(sectionChunk(html, 'top').includes(`href="${site.resume.href}"`),
+    'hero CTA row should link the résumé');
+  const contactChunk = sectionChunk(html, 'contact');
+  assert.ok(contactChunk.includes(`href="${site.resume.href}"`),
+    'contact section should link the résumé');
+
+  // --- contact button copy is built from the resume fields, not hardcoded
+  assert.ok(contactChunk.includes(`${site.resume.label} · ${site.resume.updatedAt}`),
+    'contact résumé button text should be built from resume.label + resume.updatedAt');
+
+  // --- no component hardcodes the PDF path (site.ts is the only source in src/)
+  const srcHits = [];
+  (function walk(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (/\.(astro|ts)$/.test(e.name) && readFileSync(p, 'utf8').includes('Ching-Hsiang-Shao-Resume')) {
+        srcHits.push(p);
+      }
+    }
+  })(path.join(root, 'src'));
+  assert.deepEqual(srcHits, [path.join(root, 'src', 'data', 'site.ts')],
+    'only src/data/site.ts may mention the résumé filename');
 });

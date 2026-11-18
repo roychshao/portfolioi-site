@@ -5,7 +5,7 @@
 // The `part` prop lets index.astro keep section#contact inside <main> and the
 // <footer> element outside it: part="contact" emits only the section,
 // part="footer" only the footer (default: both).
-import { contact, footer, nav } from '../data/site';
+import { contact, footer, nav, resume } from '../data/site';
 import Icon from './Icons.astro';
 
 const { part = 'both' } = Astro.props;
@@ -27,6 +27,10 @@ const isExternal = (href: string) => href.startsWith('https://');
         </a>
       ))}
     </div>
+    {/* Résumé download — copy built from the single `resume` source. */}
+    <a class="resume-download" href={resume.href} download>
+      {`${resume.label} · ${resume.updatedAt}`}
+    </a>
   </section>
 )}
 {part !== 'contact' && (
@@ -53,6 +57,23 @@ const isExternal = (href: string) => href.startsWith('https://');
   .contact-sub { color: var(--c-muted); margin-bottom: 1.5rem; }
 
   .contact-pills { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+
+  /* Full-width outlined résumé download button under the channel pills. */
+  .resume-download {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 1rem;
+    padding: 0.85em 1.3em;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    background: var(--c-card);
+    color: var(--c-ink);
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  .resume-download:hover { border-color: var(--c-primary); color: var(--c-primary); text-decoration: none; }
 
   .contact-pill {
     font-size: 0.95rem;
