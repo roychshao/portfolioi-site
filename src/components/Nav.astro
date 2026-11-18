@@ -1,7 +1,7 @@
 ---
 // Sticky capsule nav: mono wordmark + anchor links + GitHub/Mail inline SVGs.
 // <768px: hamburger button toggling aria-expanded; panel also opens on
-// :focus-within so it degrades fail-open without JS. No html.js gating here —
+// :focus-within (gated on html:not(.js)) so it degrades fail-open without JS;
 // that class belongs to Task 5's main.ts; this script is standalone.
 import { nav, contact } from '../data/site';
 import Icon from './Icons.astro';
@@ -145,7 +145,7 @@ import Icon from './Icons.astro';
       box-shadow: var(--shadow-card);
     }
     /* fail-open: keyboard focus alone reveals the panel, no JS required */
-    .nav-capsule:focus-within .nav-menu,
+    html:not(.js) .nav-capsule:focus-within .nav-menu,
     .nav-menu.is-open { display: flex; }
 
     .nav-links { flex-direction: column; gap: 0.1rem; }
