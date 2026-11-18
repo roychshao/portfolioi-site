@@ -377,19 +377,19 @@ export const timeline: TimelineItem[] = [
     period: '2024-09 – 2026-08',
     title: 'NTU CSIE MS',
     org: 'NTU SE Lab',
-    text: 'Master\u2019s thesis in year two: a stage-based LLM agentic workflow validated on a real DCIM system, independently owning the full dataset-to-workflow pipeline.',
-  },
-  {
-    period: '2024-09 – 2025-06',
-    title: 'Research — monolith-to-microservices automation (MS year 1)',
-    org: 'NTU SE Lab',
-    text: 'First master\u2019s year: continued a senior\u2019s project — static analysis to extract service dependencies + DDD aggregate repacking, prototyped end to end.',
+    text: 'Year two, full-time on my own master\u2019s thesis: a stage-based LLM agentic workflow validated on a real DCIM system, independently owning the full dataset-to-workflow pipeline.',
   },
   {
     period: '2025-01 – 2025-02',
     title: 'DCIM automated regression testing (Research Assistant)',
     org: 'NTU SE Lab',
     text: 'Delivered 100+ Cypress E2E tests from vendor specs; adopted as the lab\u2019s continuous validation standard.',
+  },
+  {
+    period: '2025-02 – 2025-06',
+    title: 'Research — monolith-to-microservices automation (MS year 1)',
+    org: 'NTU SE Lab',
+    text: 'Second half of my first master\u2019s year: continued a senior\u2019s project — static analysis to extract service dependencies + DDD aggregate repacking, prototyped end to end.',
   },
   {
     period: '2026 – present',
