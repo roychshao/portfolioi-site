@@ -1,6 +1,6 @@
 ---
 // About: two columns — left story paragraphs + skill pills, right the hillside
-// photo as a rounded block image + the timeline list. Story/alt copy lives in
+// the timeline list (newest first). Story copy lives in
 // site.ts (`about`); the heading label is reused from nav (single source).
 import { about, nav, skills, timeline } from '../data/site';
 import { Image } from 'astro:assets';
@@ -19,7 +19,7 @@ const skillPills = [...skills.languages, ...skills.frameworks, ...skills.tools];
     </div>
     <div class="about-side">
       <ol class="timeline">
-        {timeline.map((t) => (
+        {[...timeline].reverse().map((t) => (
           <li class="timeline-item reveal">
             <span class="timeline-period">{t.period}</span>
             <h3 class="timeline-title">{t.title}</h3>
@@ -44,7 +44,8 @@ const skillPills = [...skills.languages, ...skills.frameworks, ...skills.tools];
     margin-top: 1.5rem;
   }
   @media (min-width: 768px) {
-    .about-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
+    .about-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); align-items: start; }
+    .timeline { gap: clamp(1.3rem, 2.6vh, 2.15rem); }
   }
 
   .about-story { display: grid; align-content: start; gap: 0.25rem; }
@@ -52,14 +53,6 @@ const skillPills = [...skills.languages, ...skills.frameworks, ...skills.tools];
 
   .skill-pills { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.9rem; }
   .skill-pills .pill { font-size: 0.78rem; color: var(--c-muted); }
-
-  .about-figure {
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--c-line);
-    box-shadow: var(--shadow-card);
-  }
-  .about-figure img { width: 100%; height: auto; }
 
   .timeline {
     list-style: none;
