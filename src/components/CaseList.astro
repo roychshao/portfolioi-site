@@ -60,7 +60,7 @@ const heading = nav.links.find((l) => l.href === `#${id}`)?.label ?? '';
               aria-expanded="false"
               aria-controls={`case-panel-${c.id}`}>
               {thumb
-                ? <Image class="case-thumb" src={thumb.src} width={220} widths={[110, 220]} alt="" loading="lazy" />
+                ? <Image class="case-thumb" src={thumb.src} width={220} widths={[110, 220]} alt={thumb.alt} loading="lazy" />
                 : <span class="case-stat" aria-hidden="true">{stat}</span>}
               <span class="case-summary">
                 <span class="case-title" id={`case-title-${c.id}`}>{c.title}</span>

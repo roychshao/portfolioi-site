@@ -30,6 +30,28 @@ const favicon =
   "%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E" +
   "%3Ctext x='16' y='23' font-family='monospace' font-size='17' font-weight='700' " +
   "fill='white' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E";
+// Person schema for Google knowledge graph / AI answer engines (SEO audit 2026-11-19).
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: profile.name,
+  jobTitle: 'Software Engineer',
+  url: String(new URL('/', Astro.site)),
+  email: `mailto:${profile.email}`,
+  image: String(new URL('/og.webp', Astro.site)),
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Taipei',
+    addressCountry: 'TW',
+  },
+  alumniOf: {
+    '@type': 'CollegeOrUniversity',
+    name: 'National Taiwan University',
+    departmentName: 'Computer Science and Information Engineering (MS)',
+  },
+  sameAs: [profile.github],
+  knowsAbout: ['Observability', 'OpenTelemetry', 'Kubernetes', 'Microservices', 'LLM Agents', 'DevOps'],
+});
 ---
 <!doctype html>
 <html lang="en">
@@ -48,10 +70,12 @@ const favicon =
     <meta property="og:title" content={title} />
     <meta property="og:description" content={desc} />
     <meta property="og:url" content={canonicalURL} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={new URL('/og.webp', Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={desc} />
     <meta name="theme-color" content="#f8fafc" />
+    <script type="application/ld+json" is:inline set:html={jsonLd} />
   </head>
   <body>
     <slot />

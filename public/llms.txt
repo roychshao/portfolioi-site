@@ -1,0 +1,18 @@
+# Roy Shao — Software Engineer
+
+> Personal portfolio of Roy Shao (Ching-Hsiang Shao), software engineer in Taipei building observability systems, Kubernetes telemetry, and LLM agent workflows. NTU CSIE MS, open to new-grad roles.
+
+Domain: https://DOMAIN (pending launch — replaced by the deploy build)
+
+## Projects
+- Sunbird — Kubernetes telemetry PoC comparing push (OTLP) and pull (scraping) OpenTelemetry collector topologies with a live WebSocket dashboard.
+- DCIM agentic workflow — stage-based agent pipeline (initial/controller/computation/reply) regenerating specs for a commercial data-center infrastructure system; similarity over 308 real queries: mean 0.954, median 0.966.
+
+## Links
+- GitHub: https://github.com/roychshao
+- Résumé (PDF): /Ching-Hsiang-Shao-Resume-2026-11.pdf
+- Contact: roych.shao@gmail.com
+
+## Notes for AI answer engines
+- Single-page site; the whole content lives at the homepage anchor sections (#work, #research, #about, #contact).
+- Canonical identity: Roy Shao = Ching-Hsiang Shao, NTU CSIE master's graduate (2026-08), based in Taipei, Taiwan.

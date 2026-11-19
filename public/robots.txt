@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Sitemap line is completed at deploy time (see docs/2026-11-19-seo-launch-checklist.md):
+# Sitemap: https://DOMAIN/sitemap.xml
