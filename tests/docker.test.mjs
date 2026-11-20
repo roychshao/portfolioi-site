@@ -26,7 +26,7 @@ test('Dockerfile: two FROM stages, ARG SITE + npm ci in build stage, nginx-unpri
   assert.equal(froms.length, 2, 'Dockerfile should have exactly 2 FROM stages');
 
   const [buildStage, runtimeStage] = d.split(/^FROM\b/m).slice(1);
-  assert.match(buildStage, /^ARG SITE=https:\/\/example\.com$/m, 'build stage needs ARG SITE');
+  assert.match(buildStage, /^ARG SITE=https:\/\/portfolio\.royshao\.dev$/m, 'build stage needs ARG SITE');
   assert.match(buildStage, /\bnpm ci\b/, 'build stage must use npm ci (not npm install)');
   assert.match(buildStage, /npm run build/, 'build stage must run npm run build');
   assert.match(d, /^FROM nginxinc\/nginx-unprivileged:/m, 'runtime stage must be nginx-unprivileged');
@@ -65,7 +65,7 @@ test('nginx.conf: gzip on, no privileged 80, listen 8080, cache rules', () => {
 test('docker-compose.yml: SITE build arg from DOMAIN, loopback host port with HOST_PORT override, restart policy', () => {
   const c = read(compose);
   assert.match(c, /name:\s*portfolio-site/, 'compose should be named portfolio-site');
-  assert.match(c, /SITE:\s*\$\{DOMAIN:-https:\/\/example\.com\}/, 'build.args SITE must default to ${DOMAIN:-https://example.com}');
+  assert.match(c, /SITE:\s*\$\{DOMAIN:-https:\/\/portfolio\.royshao\.dev\}/, 'build.args SITE must default to ${DOMAIN:-https://portfolio.royshao.dev}');
   assert.match(c, /"127\.0\.0\.1:\$\{HOST_PORT:-8404\}:8080"/, 'ports must bind loopback 127.0.0.1 with HOST_PORT override (default 8404) to container 8080');
   assert.doesNotMatch(c, /(?:^|[\s"'])80:80(?=$|[\s"'])/m, 'must NOT publish port 80 directly');
   assert.match(c, /restart:\s*unless-stopped/, 'restart policy should be unless-stopped');

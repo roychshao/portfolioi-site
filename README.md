@@ -1,55 +1,64 @@
 # Roy Shao — Portfolio Site
 
-A single-page Astro 5 static portfolio (work case studies, honors, writing, about, contact).
-It ships as one small static bundle so it loads fast on mobile and deploys anywhere.
-Deploy is a self-contained Docker image (multi-stage Node build → unprivileged nginx), one `docker compose up` per host.
+A static single-page portfolio site: projects, research, writing, and contact for
+[Roy Shao](https://portfolio.royshao.dev) (Ching-Hsiang Shao), software engineer based in Taipei.
 
-## Local development
+**Live site:** <https://portfolio.royshao.dev>
 
-```bash
-npm ci            # install dependencies
-npm run dev       # dev server at http://localhost:4321 (canonical origin: SITE env var, default localhost)
+## Stack
+
+- [Astro 5](https://astro.build) — static output, zero JS shipped by default
+- Content is held in a single typed source (`src/data/site.ts`) and rendered into
+  anchor sections (`#work`, `#research`, `#writing`, `#about`, `#contact`)
+- CSS is inlined at build time (`inlineStylesheets: 'always'`) to avoid a
+  render-blocking stylesheet request
+- Self-hosted subset fonts (Inter, JetBrains Mono) via `@fontsource`
+
+## SEO & discoverability
+
+- Canonical / Open Graph / Twitter card tags derived from the `SITE` env at build
+- `Person` JSON-LD structured data for search and AI answer engines
+- `robots.txt`, `sitemap.xml`, and `llms.txt` served from `public/`
+
+## Development
+
+```sh
+npm install
+npm run dev      # local dev server
+npm test         # node --test, content & structure checks
+npm run build    # static build → dist/  (SITE env sets canonical origin)
 ```
 
-## Build & test
+## Deployment
 
-```bash
-npm run build     # static output in dist/
-npm test          # node --test: build smoke + data/layout/docker static assertions
-                  # (run `npm run build` first — several tests assert on dist/)
+The site is a plain static bundle; serve `dist/` with any static host.
+
+Using Docker (nginx serves the build, `DOMAIN` flows into the canonical URLs):
+
+```sh
+DOMAIN=https://portfolio.royshao.dev docker compose up -d --build
 ```
 
-The `SITE` env var sets the canonical/OG absolute origin at build time; default `https://example.com`.
+The container binds loopback only (`127.0.0.1:8404`, override with `HOST_PORT`);
+serving it over HTTPS at the public domain is handled by the owner's reverse proxy / tunnel.
 
-## Deploy on host
+Verify the container answers locally:
 
-The sandbox has no docker CLI; the image is built and run **on the deploy host** from this repo:
-
-```bash
-# 1. Build + start (replace DOMAIN with your public origin, no trailing slash)
-#    The container publishes loopback-only 127.0.0.1:8404; override with HOST_PORT=<port> if taken.
-DOMAIN=https://roy.example.com docker compose up -d --build
-
-# 2. Self-check — expect 200
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8404/
-
-# 3. Spot-check one hashed asset discovered from the served page itself — expect 200 + immutable cache header
-ASSET=$(curl -s http://127.0.0.1:8404/ | grep -o '/_astro/[^"]*\.webp' | head -1)
-curl -sI "http://127.0.0.1:8404${ASSET}" | head -5
-
-# 4. Stop / update
-docker compose down           # stop
-DOMAIN=https://roy.example.com docker compose up -d --build   # rebuild after a git pull
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8404/   # expect 200
 ```
 
-Paste the output of steps 2–3 back to Hermes so the port probe can be verified.
+## Repository layout
 
-Container listens on **8080** internally (nginx-unprivileged, non-root UID 101 — no privileged ports);
-the host mapping binds `127.0.0.1:${HOST_PORT:-8404}` so nothing is exposed beyond loopback.
+```
+src/data/site.ts     # single source of truth for all site content
+src/components/      # section components
+src/layouts/         # BaseLayout (meta/JSON-LD) + page shell
+public/              # resume PDF, og image, robots/sitemap/llms
+tests/               # content-quality & structural assertions
+docs/                # design notes
+```
 
-### HTTPS / reverse proxy
+## License
 
-TLS termination and the public DNS name are **owner-managed** outside this repo:
-point your existing reverse proxy (nginx/Caddy/Traefik) at `127.0.0.1:8404` (or `127.0.0.1:$HOST_PORT`
-if you overrode it) and set `DOMAIN`
-to the same origin used for the build so canonical/OG URLs match.
+© 2026 Roy Shao. All rights reserved.

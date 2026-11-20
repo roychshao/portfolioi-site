@@ -2,7 +2,7 @@
 
 > Personal portfolio of Roy Shao (Ching-Hsiang Shao), software engineer in Taipei building observability systems, Kubernetes telemetry, and LLM agent workflows. NTU CSIE MS, open to new-grad roles.
 
-Domain: https://DOMAIN (pending launch — replaced by the deploy build)
+Domain: https://portfolio.royshao.dev
 
 ## Projects
 - Sunbird — Kubernetes telemetry PoC comparing push (OTLP) and pull (scraping) OpenTelemetry collector topologies with a live WebSocket dashboard.

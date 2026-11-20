@@ -1,6 +1,6 @@
 # --- build stage: render the Astro static site with the deployment origin ---
 FROM node:22-alpine AS build
-ARG SITE=https://example.com
+ARG SITE=https://portfolio.royshao.dev
 ENV SITE=$SITE
 WORKDIR /app
 COPY package*.json ./
